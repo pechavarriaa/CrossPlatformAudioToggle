@@ -216,10 +216,10 @@ namespace CoreAudioApi {
 
 Add-Type -TypeDefinition $csharpCode
 
-$speakerDevice = "Speakers (Your Speaker Name)"
-$hyperxDeviceOutput = "Headphones (Your Headphone Name)"
-$hyperxDeviceInput = "Microphone (Your Mic Name)"
-$ankerDevice = "Microphone (Your Alt Mic Name)"
+$speakerDevice = "Speakers (Lenovo USB Audio)"
+$ankerDevice = "Microphone (Anker PowerConf C200)"
+$hyperxDeviceOutput = "Headset Earphone (HyperX Virtual Surround Sound)"
+$hyperxDeviceInput = "Headset Microphone (HyperX Virtual Surround Sound)"
 
 function Toggle-AudioSetup {
     try {
@@ -293,7 +293,7 @@ function Get-AudioDevices {
 
 # Create the tray icon
 $notifyIcon = New-Object System.Windows.Forms.NotifyIcon
-$notifyIcon.Icon = [System.Drawing.SystemIcons]::Information
+$notifyIcon.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon("C:\Windows\System32\SndVol.exe")
 $notifyIcon.Text = "Audio Toggle"
 $notifyIcon.Visible = $true
 
@@ -339,5 +339,4 @@ $notifyIcon.BalloonTipText = "Click to toggle audio devices"
 $notifyIcon.ShowBalloonTip(2000)
 
 # Run the message loop
-
 [System.Windows.Forms.Application]::Run()
