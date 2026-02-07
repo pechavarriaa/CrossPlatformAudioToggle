@@ -119,42 +119,72 @@ if (-not $Silent) {
     
     Add-Type -AssemblyName System.Windows.Forms
     
+    # Letters for input devices
+    $letters = @('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P')
+    
     Write-Host ""
-    Write-Host "=== OUTPUT DEVICES (Speakers/Headphones) ===" -ForegroundColor Cyan
+    Write-Host "=== OUTPUT DEVICES (Speakers/Headphones) - Use NUMBERS ===" -ForegroundColor Cyan
     $outputDevices = [CoreAudioApi.CoreAudioController]::GetAudioDevices([CoreAudioApi.EDataFlow]::eRender)
     for ($i = 0; $i -lt $outputDevices.Count; $i++) {
         Write-Host "  [$i] $($outputDevices[$i])"
     }
     
     Write-Host ""
-    Write-Host "=== INPUT DEVICES (Microphones) ===" -ForegroundColor Cyan
+    Write-Host "=== INPUT DEVICES (Microphones) - Use LETTERS ===" -ForegroundColor Cyan
     $inputDevices = [CoreAudioApi.CoreAudioController]::GetAudioDevices([CoreAudioApi.EDataFlow]::eCapture)
     for ($i = 0; $i -lt $inputDevices.Count; $i++) {
-        Write-Host "  [$i] $($inputDevices[$i])"
+        Write-Host "  [$($letters[$i])] $($inputDevices[$i])"
     }
     
     Write-Host ""
-    Write-Host "Enter the NUMBER for each device:" -ForegroundColor Yellow
+    Write-Host "Enter NUMBER for outputs, LETTER for inputs:" -ForegroundColor Yellow
     Write-Host ""
     
-    # Get user selections
-    $speakerIdx = Read-Host "Speaker/Monitor output device #"
-    $headsetOutIdx = Read-Host "Headset output device #"
-    $headsetInIdx = Read-Host "Headset microphone device #"
-    $secondMicIdx = Read-Host "Secondary microphone device # (webcam, etc.)"
+    # Get user selections in variable order: speakerDevice, secondMicDevice, headsetOutput, headsetInput
+    Write-Host "1. Speaker/Monitor (OUTPUT - enter number):" -ForegroundColor Cyan
+    $speakerIdx = Read-Host "   "
     
-    # Validate and get device names
+    Write-Host "2. Secondary Microphone - webcam, etc. (INPUT - enter letter):" -ForegroundColor Cyan
+    $secondMicLetter = (Read-Host "   ").ToUpper()
+    $secondMicIdx = [array]::IndexOf($letters, $secondMicLetter)
+    
+    Write-Host "3. Headset Output (OUTPUT - enter number):" -ForegroundColor Cyan
+    $headsetOutIdx = Read-Host "   "
+    
+    Write-Host "4. Headset Microphone (INPUT - enter letter):" -ForegroundColor Cyan
+    $headsetInLetter = (Read-Host "   ").ToUpper()
+    $headsetInIdx = [array]::IndexOf($letters, $headsetInLetter)
+    
+    # Validate indices
+    if ([int]$speakerIdx -ge $outputDevices.Count -or [int]$speakerIdx -lt 0) {
+        Write-Warning "Invalid speaker device number. Please run the installer again."
+        return
+    }
+    if ([int]$headsetOutIdx -ge $outputDevices.Count -or [int]$headsetOutIdx -lt 0) {
+        Write-Warning "Invalid headset output device number. Please run the installer again."
+        return
+    }
+    if ($secondMicIdx -lt 0 -or $secondMicIdx -ge $inputDevices.Count) {
+        Write-Warning "Invalid secondary mic letter. Please run the installer again."
+        return
+    }
+    if ($headsetInIdx -lt 0 -or $headsetInIdx -ge $inputDevices.Count) {
+        Write-Warning "Invalid headset mic letter. Please run the installer again."
+        return
+    }
+    
+    # Get device names
     $speakerDevice = $outputDevices[[int]$speakerIdx]
+    $secondMicDevice = $inputDevices[$secondMicIdx]
     $headsetOutput = $outputDevices[[int]$headsetOutIdx]
-    $headsetInput = $inputDevices[[int]$headsetInIdx]
-    $secondMicDevice = $inputDevices[[int]$secondMicIdx]
+    $headsetInput = $inputDevices[$headsetInIdx]
     
     Write-Host ""
     Write-Host "Your configuration:" -ForegroundColor Green
-    Write-Host "  Speaker: $speakerDevice"
-    Write-Host "  Headset Output: $headsetOutput"
-    Write-Host "  Headset Mic: $headsetInput"
-    Write-Host "  Secondary Mic: $secondMicDevice"
+    Write-Host "  1. Speaker: $speakerDevice"
+    Write-Host "  2. Secondary Mic: $secondMicDevice"
+    Write-Host "  3. Headset Output: $headsetOutput"
+    Write-Host "  4. Headset Mic: $headsetInput"
     Write-Host ""
     
     # Update the script with user's devices
