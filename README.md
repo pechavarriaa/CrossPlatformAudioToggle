@@ -2,6 +2,19 @@
 
 A lightweight PowerShell script that adds a **system tray icon** to quickly toggle between audio devices on Windows 10/11. Switch between headphones and speakers with a single click—no third-party software required.
 
+## Quick Install
+
+Run this in PowerShell:
+```powershell
+irm https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/main/install.ps1 | iex
+```
+
+**With options:**
+```powershell
+# Add to startup + desktop shortcut
+irm https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/main/install.ps1 -OutFile install.ps1; .\install.ps1 -AddToStartup -DesktopShortcut
+```
+
 ## Features
 
 - **One-Click Audio Switching** - Left-click the tray icon to instantly switch between audio configurations
@@ -24,7 +37,7 @@ A lightweight PowerShell script that adds a **system tray icon** to quickly togg
 - PowerShell 5.1 (pre-installed on Windows)
 - No admin rights required
 
-## Installation
+## Manual Installation
 
 1. **Download** `toggleAudio.ps1` to a folder of your choice
 
@@ -118,6 +131,12 @@ The script uses the Windows Core Audio API (MMDevice API) via inline C# code com
 4. Sets both Console and Multimedia roles for seamless switching
 
 No external DLLs or modules required—everything is built into Windows.
+
+## Uninstall
+
+```powershell
+irm https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/main/uninstall.ps1 | iex
+```
 
 ## Keywords
 
