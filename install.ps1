@@ -5,6 +5,8 @@
 .DESCRIPTION
     Downloads and installs the Audio Toggle system tray utility.
     Creates shortcuts and optionally adds to Windows startup.
+.PARAMETER Reconfigure
+    Skip download and just reconfigure device settings.
 .LINK
     https://github.com/pechavarriaa/WindowsAudioProfiles
 #>
@@ -12,7 +14,8 @@
 param(
     [switch]$AddToStartup,
     [switch]$DesktopShortcut,
-    [switch]$Silent
+    [switch]$Silent,
+    [switch]$Reconfigure
 )
 
 $ErrorActionPreference = "Stop"
@@ -35,26 +38,8 @@ function Write-Success {
     }
 }
 
-# Create install directory
-Write-Status "Creating install directory..."
-if (-not (Test-Path $installDir)) {
-    New-Item -ItemType Directory -Path $installDir -Force | Out-Null
-}
+# Create shortcut helper function - defined early so we can use it
 
-# Download the script
-Write-Status "Downloading Audio Toggle..."
-try {
-    Invoke-WebRequest -Uri "$repoUrl/toggleAudio.ps1" -OutFile $scriptPath -UseBasicParsing
-} catch {
-    Write-Error "Failed to download script: $_"
-    exit 1
-}
-
-# Unblock the file
-Write-Status "Unblocking script..."
-Unblock-File -Path $scriptPath
-
-# Create shortcut helper function
 function New-Shortcut {
     param(
         [string]$ShortcutPath,
@@ -78,29 +63,59 @@ $pwshPath = "powershell.exe"
 $arguments = "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$scriptPath`""
 $iconPath = "C:\Windows\System32\SndVol.exe,0"
 
-# Create Start Menu shortcut
-Write-Status "Creating Start Menu shortcut..."
-$startMenuPath = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Audio Toggle.lnk"
-New-Shortcut -ShortcutPath $startMenuPath -TargetPath $pwshPath -Arguments $arguments -IconLocation $iconPath
+# Skip download if reconfiguring
+if (-not $Reconfigure) {
+    # Create install directory
+    Write-Status "Creating install directory..."
+    if (-not (Test-Path $installDir)) {
+        New-Item -ItemType Directory -Path $installDir -Force | Out-Null
+    }
 
-# Desktop shortcut (optional)
-if ($DesktopShortcut) {
-    Write-Status "Creating Desktop shortcut..."
-    $desktopPath = Join-Path ([Environment]::GetFolderPath("Desktop")) "Audio Toggle.lnk"
-    New-Shortcut -ShortcutPath $desktopPath -TargetPath $pwshPath -Arguments $arguments -IconLocation $iconPath
+    # Download the script
+    Write-Status "Downloading Audio Toggle..."
+    try {
+        Invoke-WebRequest -Uri "$repoUrl/toggleAudio.ps1" -OutFile $scriptPath -UseBasicParsing
+    } catch {
+        Write-Error "Failed to download script: $_"
+        exit 1
+    }
+
+    # Unblock the file
+    Write-Status "Unblocking script..."
+    Unblock-File -Path $scriptPath
+
+    # Create Start Menu shortcut
+    Write-Status "Creating Start Menu shortcut..."
+    $startMenuPath = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Audio Toggle.lnk"
+    New-Shortcut -ShortcutPath $startMenuPath -TargetPath $pwshPath -Arguments $arguments -IconLocation $iconPath
+
+    # Desktop shortcut (optional)
+    if ($DesktopShortcut) {
+        Write-Status "Creating Desktop shortcut..."
+        $desktopPath = Join-Path ([Environment]::GetFolderPath("Desktop")) "Audio Toggle.lnk"
+        New-Shortcut -ShortcutPath $desktopPath -TargetPath $pwshPath -Arguments $arguments -IconLocation $iconPath
+    }
+
+    # Add to Startup (optional)
+    if ($AddToStartup) {
+        Write-Status "Adding to Windows Startup..."
+        $startupPath = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Startup\Audio Toggle.lnk"
+        New-Shortcut -ShortcutPath $startupPath -TargetPath $pwshPath -Arguments $arguments -IconLocation $iconPath
+    }
+
+    Write-Success "`n=== Installation Complete ==="
+    Write-Host ""
+    Write-Host "Installed to: $scriptPath" -ForegroundColor White
+    Write-Host ""
+} else {
+    Write-Host "=== Reconfigure Audio Devices ===" -ForegroundColor Yellow
+    Write-Host ""
+    
+    if (-not (Test-Path $scriptPath)) {
+        Write-Error "Audio Toggle not installed. Run without -Reconfigure first."
+        exit 1
+    }
 }
-
-# Add to Startup (optional)
-if ($AddToStartup) {
-    Write-Status "Adding to Windows Startup..."
-    $startupPath = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Startup\Audio Toggle.lnk"
-    New-Shortcut -ShortcutPath $startupPath -TargetPath $pwshPath -Arguments $arguments -IconLocation $iconPath
-}
-
-Write-Success "`n=== Installation Complete ==="
-Write-Host ""
-Write-Host "Installed to: $scriptPath" -ForegroundColor White
-Write-Host ""
 
 # Device configuration
 if (-not $Silent) {
@@ -137,55 +152,90 @@ if (-not $Silent) {
     }
     
     Write-Host ""
-    Write-Host "Enter NUMBER for outputs, LETTER for inputs:" -ForegroundColor Yellow
-    Write-Host ""
+    Write-Host "Enter NUMBER for outputs, LETTER for inputs (or 'q' to quit):" -ForegroundColor Yellow
     
-    # Get user selections in variable order: speakerDevice, secondMicDevice, headsetOutput, headsetInput
-    Write-Host "1. Speaker/Monitor (OUTPUT - enter number):" -ForegroundColor Cyan
-    $speakerIdx = Read-Host "   "
-    
-    Write-Host "2. Secondary Microphone - webcam, etc. (INPUT - enter letter):" -ForegroundColor Cyan
-    $secondMicLetter = (Read-Host "   ").ToUpper()
-    $secondMicIdx = [array]::IndexOf($letters, $secondMicLetter)
-    
-    Write-Host "3. Headset Output (OUTPUT - enter number):" -ForegroundColor Cyan
-    $headsetOutIdx = Read-Host "   "
-    
-    Write-Host "4. Headset Microphone (INPUT - enter letter):" -ForegroundColor Cyan
-    $headsetInLetter = (Read-Host "   ").ToUpper()
-    $headsetInIdx = [array]::IndexOf($letters, $headsetInLetter)
-    
-    # Validate indices
-    if ([int]$speakerIdx -ge $outputDevices.Count -or [int]$speakerIdx -lt 0) {
-        Write-Warning "Invalid speaker device number. Please run the installer again."
-        return
+    # Configuration loop with validation
+    $configured = $false
+    while (-not $configured) {
+        Write-Host ""
+        
+        # Get speaker (with validation loop)
+        $validSpeaker = $false
+        while (-not $validSpeaker) {
+            Write-Host "1. Speaker/Monitor (OUTPUT - enter number):" -ForegroundColor Cyan
+            $speakerInput = Read-Host "   "
+            if ($speakerInput -eq 'q') { Write-Host "Cancelled." -ForegroundColor Yellow; return }
+            try {
+                $speakerIdx = [int]$speakerInput
+                if ($speakerIdx -ge 0 -and $speakerIdx -lt $outputDevices.Count) {
+                    $validSpeaker = $true
+                } else { Write-Warning "Number out of range. Try again." }
+            } catch { Write-Warning "Please enter a valid number." }
+        }
+        
+        # Get secondary mic (with validation loop)
+        $validSecondMic = $false
+        while (-not $validSecondMic) {
+            Write-Host "2. Secondary Microphone - webcam, etc. (INPUT - enter letter):" -ForegroundColor Cyan
+            $secondMicLetter = (Read-Host "   ").ToUpper()
+            if ($secondMicLetter -eq 'Q') { Write-Host "Cancelled." -ForegroundColor Yellow; return }
+            $secondMicIdx = [array]::IndexOf($letters, $secondMicLetter)
+            if ($secondMicIdx -ge 0 -and $secondMicIdx -lt $inputDevices.Count) {
+                $validSecondMic = $true
+            } else { Write-Warning "Invalid letter. Try again." }
+        }
+        
+        # Get headset output (with validation loop)
+        $validHeadsetOut = $false
+        while (-not $validHeadsetOut) {
+            Write-Host "3. Headset Output (OUTPUT - enter number):" -ForegroundColor Cyan
+            $headsetOutInput = Read-Host "   "
+            if ($headsetOutInput -eq 'q') { Write-Host "Cancelled." -ForegroundColor Yellow; return }
+            try {
+                $headsetOutIdx = [int]$headsetOutInput
+                if ($headsetOutIdx -ge 0 -and $headsetOutIdx -lt $outputDevices.Count) {
+                    $validHeadsetOut = $true
+                } else { Write-Warning "Number out of range. Try again." }
+            } catch { Write-Warning "Please enter a valid number." }
+        }
+        
+        # Get headset mic (with validation loop)
+        $validHeadsetIn = $false
+        while (-not $validHeadsetIn) {
+            Write-Host "4. Headset Microphone (INPUT - enter letter):" -ForegroundColor Cyan
+            $headsetInLetter = (Read-Host "   ").ToUpper()
+            if ($headsetInLetter -eq 'Q') { Write-Host "Cancelled." -ForegroundColor Yellow; return }
+            $headsetInIdx = [array]::IndexOf($letters, $headsetInLetter)
+            if ($headsetInIdx -ge 0 -and $headsetInIdx -lt $inputDevices.Count) {
+                $validHeadsetIn = $true
+            } else { Write-Warning "Invalid letter. Try again." }
+        }
+        
+        # Get device names
+        $speakerDevice = $outputDevices[$speakerIdx]
+        $secondMicDevice = $inputDevices[$secondMicIdx]
+        $headsetOutput = $outputDevices[$headsetOutIdx]
+        $headsetInput = $inputDevices[$headsetInIdx]
+        
+        Write-Host ""
+        Write-Host "Your configuration:" -ForegroundColor Green
+        Write-Host "  1. Speaker: $speakerDevice"
+        Write-Host "  2. Secondary Mic: $secondMicDevice"
+        Write-Host "  3. Headset Output: $headsetOutput"
+        Write-Host "  4. Headset Mic: $headsetInput"
+        Write-Host ""
+        
+        $confirm = Read-Host "Save this configuration? (Y/n/r to redo)"
+        if ($confirm -eq 'n' -or $confirm -eq 'N') {
+            Write-Host "Cancelled. Run 'install.ps1 -Reconfigure' to try again." -ForegroundColor Yellow
+            return
+        } elseif ($confirm -eq 'r' -or $confirm -eq 'R') {
+            Write-Host "`nLet's try again...`n" -ForegroundColor Cyan
+            continue
+        }
+        
+        $configured = $true
     }
-    if ([int]$headsetOutIdx -ge $outputDevices.Count -or [int]$headsetOutIdx -lt 0) {
-        Write-Warning "Invalid headset output device number. Please run the installer again."
-        return
-    }
-    if ($secondMicIdx -lt 0 -or $secondMicIdx -ge $inputDevices.Count) {
-        Write-Warning "Invalid secondary mic letter. Please run the installer again."
-        return
-    }
-    if ($headsetInIdx -lt 0 -or $headsetInIdx -ge $inputDevices.Count) {
-        Write-Warning "Invalid headset mic letter. Please run the installer again."
-        return
-    }
-    
-    # Get device names
-    $speakerDevice = $outputDevices[[int]$speakerIdx]
-    $secondMicDevice = $inputDevices[$secondMicIdx]
-    $headsetOutput = $outputDevices[[int]$headsetOutIdx]
-    $headsetInput = $inputDevices[$headsetInIdx]
-    
-    Write-Host ""
-    Write-Host "Your configuration:" -ForegroundColor Green
-    Write-Host "  1. Speaker: $speakerDevice"
-    Write-Host "  2. Secondary Mic: $secondMicDevice"
-    Write-Host "  3. Headset Output: $headsetOutput"
-    Write-Host "  4. Headset Mic: $headsetInput"
-    Write-Host ""
     
     # Update the script with user's devices
     $scriptContent = $scriptContent -replace '\$speakerDevice = ".*?"', "`$speakerDevice = `"$speakerDevice`""
@@ -196,12 +246,11 @@ if (-not $Silent) {
     Set-Content -Path $scriptPath -Value $scriptContent -Encoding UTF8
     Write-Success "Configuration saved!"
     Write-Host ""
-}
-
-Write-Host "Launch from Start Menu: 'Audio Toggle'" -ForegroundColor White
-Write-Host ""
-
-if (-not $Silent) {
+    
+    Write-Host "Launch from Start Menu: 'Audio Toggle'" -ForegroundColor White
+    Write-Host "To reconfigure: install.ps1 -Reconfigure" -ForegroundColor Gray
+    Write-Host ""
+    
     $launch = Read-Host "Launch Audio Toggle now? (Y/n)"
     if ($launch -ne 'n' -and $launch -ne 'N') {
         Start-Process $pwshPath -ArgumentList $arguments

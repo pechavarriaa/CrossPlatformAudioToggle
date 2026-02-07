@@ -312,6 +312,19 @@ $menuToggle.Add_Click({
 })
 $contextMenu.Items.Add($menuToggle)
 
+$menuConfigure = New-Object System.Windows.Forms.ToolStripMenuItem
+$menuConfigure.Text = "Configure..."
+$menuConfigure.Add_Click({
+    $installPath = Join-Path $env:LOCALAPPDATA "AudioToggle\install.ps1"
+    if (Test-Path $installPath) {
+        Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-File", "`"$installPath`"", "-Reconfigure"
+    } else {
+        # Download and run if not found locally
+        Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-Command", "irm https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/main/install.ps1 | iex; install.ps1 -Reconfigure"
+    }
+})
+$contextMenu.Items.Add($menuConfigure)
+
 $contextMenu.Items.Add((New-Object System.Windows.Forms.ToolStripSeparator))
 
 $menuExit = New-Object System.Windows.Forms.ToolStripMenuItem
