@@ -216,10 +216,10 @@ namespace CoreAudioApi {
 
 Add-Type -TypeDefinition $csharpCode
 
-$speakerDevice = "Speakers (Lenovo USB Audio)"
-$ankerDevice = "Microphone (Anker PowerConf C200)"
-$hyperxDeviceOutput = "Headset Earphone (HyperX Virtual Surround Sound)"
-$hyperxDeviceInput = "Headset Microphone (HyperX Virtual Surround Sound)"
+$speakerDevice = "Speakers (Your Speaker Name)"
+$hyperxDeviceOutput = "Headphones (Your Headphone Name)"
+$hyperxDeviceInput = "Microphone (Your Mic Name)"
+$ankerDevice = "Microphone (Your Alt Mic Name)"
 
 function Toggle-AudioSetup {
     try {
@@ -339,4 +339,5 @@ $notifyIcon.BalloonTipText = "Click to toggle audio devices"
 $notifyIcon.ShowBalloonTip(2000)
 
 # Run the message loop
+
 [System.Windows.Forms.Application]::Run()
