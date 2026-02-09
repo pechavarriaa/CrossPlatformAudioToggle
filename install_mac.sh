@@ -115,10 +115,7 @@ echo -e "1. Configure your audio devices:"
 echo -e "   ${CYAN}python3 $INSTALL_DIR/$SCRIPT_NAME --configure${NC}"
 echo -e "\n2. The app will start automatically and appear in your menu bar (🔊)"
 echo -e "\n3. To reconfigure later, click the menu bar icon and select 'Configure Devices...'"
-echo -e "\n${YELLOW}Starting Audio Toggle now...${NC}"
 
-# Start the app
-python3 "$INSTALL_DIR/$SCRIPT_NAME" &
-
-echo -e "\n${GREEN}✓ Audio Toggle is now running in your menu bar!${NC}"
+echo -e "\n${GREEN}✓ Audio Toggle has been installed and started via LaunchAgent!${NC}"
+echo -e "The app should appear in your menu bar shortly (🔊)"
 echo -e "\nTo uninstall: ${CYAN}bash uninstall_mac.sh${NC}"
