@@ -1,267 +1,189 @@
-# Audio Toggle for Linux - System Tray Application
+# Audio Toggle - Cross-Platform Audio Device Switcher
 
-A lightweight Python application that adds a **system tray icon** to quickly toggle between audio devices on Linux. Switch between headphones and speakers with a single click. Works with both PulseAudio and PipeWire.
+A lightweight application that adds a **system tray/menu bar icon** to quickly toggle between audio devices. Switch between headphones and speakers with a single click. Available for **Windows**, **macOS**, and **Linux**.
 
 ## Quick Install
 
-Run this in your terminal:
-```bash
-curl -fsSL https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/copilot/linux-version-installation/install_linux.sh | bash
+### Windows 10/11
+Run this in PowerShell:
+```powershell
+irm https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/main/install.ps1 | iex
 ```
 
-The installer will:
-1. Detect your Linux distribution (Ubuntu, Fedora, Arch, etc.)
-2. Install required dependencies automatically
-3. Install the Audio Toggle application
-4. Show your available audio devices
-5. Let you configure your preferred devices
-6. Set up auto-start on login
+### macOS
+Run this in Terminal:
+```bash
+curl -fsSL https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/copilot/mac-version-installation/install_mac.sh | bash
+```
 
-## Supported Distributions
-
-- **Ubuntu** / Debian / Linux Mint / Pop!_OS
-- **Fedora** / RHEL / CentOS
-- **Arch Linux** / Manjaro / EndeavourOS
-- **openSUSE**
-- Other distributions (may require manual dependency installation)
+### Linux (Ubuntu, Fedora, Arch, openSUSE)
+Run this in your terminal:
+```bash
+curl -fsSL https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/copilot/mac-version-installation/install_linux.sh | bash
+```
 
 ## Features
 
-- **One-Click Audio Switching** - Click the tray icon to instantly switch between audio configurations
-- **System Tray Integration** - Runs silently in the background with a convenient tray icon
-- **Native Notifications** - Visual feedback showing which audio device is now active
-- **Auto-Start** - Automatically starts when you log in
-- **PulseAudio & PipeWire Support** - Works with both audio systems
-- **Lightweight** - Minimal resource usage, written in Python
-- **Customizable** - Easily configure your own audio device names
+- **One-Click Audio Switching** - Toggle between audio configurations instantly
+- **System Tray/Menu Bar Integration** - Native integration for each platform
+- **Auto-Start Support** - Automatically starts when you log in
+- **Two Audio Profiles** - Configure headset and speakers/desktop setups
+- **Visual Notifications** - Feedback when audio devices switch
+- **Lightweight** - Minimal resource usage
+- **Easy Configuration** - Interactive device selection on first run
 
-## Use Cases
+## Platform-Specific Details
 
-- Switch between gaming headset and desktop speakers
-- Toggle between work headphones and meeting speakerphone
-- Quick audio output switching for streaming/recording
-- Accessibility: avoid digging through audio settings
+### Windows
+- **Technology**: PowerShell with Windows Forms
+- **Audio API**: Core Audio API
+- **System Tray**: Native Windows tray icon
+- **Requirements**: Windows 10/11, PowerShell 5.1+
+- **Auto-Start**: Startup folder integration
 
-## Requirements
+### macOS
+- **Technology**: Python 3 with rumps (menu bar library)
+- **Audio API**: SwitchAudioSource CLI (CoreAudio wrapper)
+- **Menu Bar**: Native macOS menu bar icon (🔊)
+- **Requirements**: macOS 10.14+, Python 3.7+, Homebrew
+- **Auto-Start**: LaunchAgents
+- **Dependencies**: Automatically installed (SwitchAudioSource, rumps)
+- **[Full macOS Documentation →](README_MAC.md)**
 
-- Linux distribution (Ubuntu, Fedora, Arch, etc.)
-- Python 3.6 or later
-- PulseAudio or PipeWire
-- GTK 3
-- AppIndicator3 library
-- libnotify (for notifications)
-
-All dependencies are automatically installed by the installer script.
-
-## Manual Installation
-
-If you prefer to install manually:
-
-### Ubuntu/Debian
-```bash
-# Install dependencies
-sudo apt update
-sudo apt install -y python3 python3-pip python3-gi gir1.2-appindicator3-0.1 libnotify-bin pulseaudio-utils
-
-# Create directories
-mkdir -p ~/.local/share/audio_toggle
-mkdir -p ~/.config/audio_toggle
-mkdir -p ~/.config/autostart
-
-# Download script
-curl -fsSL https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/copilot/linux-version-installation/audio_toggle_linux.py -o ~/.local/share/audio_toggle/audio_toggle_linux.py
-chmod +x ~/.local/share/audio_toggle/audio_toggle_linux.py
-
-# Configure
-python3 ~/.local/share/audio_toggle/audio_toggle_linux.py --configure
-
-# Run
-python3 ~/.local/share/audio_toggle/audio_toggle_linux.py &
-```
-
-### Fedora
-```bash
-# Install dependencies
-sudo dnf install -y python3 python3-pip python3-gobject gtk3 libappindicator-gtk3 libnotify pulseaudio-utils
-
-# Create directories and download (same as above)
-mkdir -p ~/.local/share/audio_toggle
-mkdir -p ~/.config/audio_toggle
-mkdir -p ~/.config/autostart
-
-curl -fsSL https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/copilot/linux-version-installation/audio_toggle_linux.py -o ~/.local/share/audio_toggle/audio_toggle_linux.py
-chmod +x ~/.local/share/audio_toggle/audio_toggle_linux.py
-
-python3 ~/.local/share/audio_toggle/audio_toggle_linux.py --configure
-python3 ~/.local/share/audio_toggle/audio_toggle_linux.py &
-```
-
-### Arch Linux
-```bash
-# Install dependencies
-sudo pacman -S --needed python python-pip python-gobject gtk3 libappindicator-gtk3 libnotify pulseaudio
-
-# Create directories and download (same as above)
-mkdir -p ~/.local/share/audio_toggle
-mkdir -p ~/.config/audio_toggle
-mkdir -p ~/.config/autostart
-
-curl -fsSL https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/copilot/linux-version-installation/audio_toggle_linux.py -o ~/.local/share/audio_toggle/audio_toggle_linux.py
-chmod +x ~/.local/share/audio_toggle/audio_toggle_linux.py
-
-python3 ~/.local/share/audio_toggle/audio_toggle_linux.py --configure
-python3 ~/.local/share/audio_toggle/audio_toggle_linux.py &
-```
-
-## Usage
-
-### System Tray Mode (Recommended)
-After installation, the app appears in the system tray:
-- **Click icon**: Opens menu with options
-- **Select "Toggle Audio"**: Switch between audio configurations
-- **Select "Configure Devices..."**: Reconfigure your audio devices
-- **Select "Quit"**: Exit the application
-
-### Configuration
-
-The application switches between two audio configurations:
-
-**Configuration 1 (Headset mode):**
-- Output: Your headset speakers
-- Input: Your headset microphone
-
-**Configuration 2 (Desktop mode):**
-- Output: Your desktop speakers/monitor
-- Input: Your webcam/secondary microphone
-
-To reconfigure at any time:
-```bash
-python3 ~/.local/share/audio_toggle/audio_toggle_linux.py --configure
-```
-
-Or use the "Configure Devices..." option from the tray icon menu.
-
-## Auto-Start with Your Desktop
-
-The installer automatically sets up auto-start. If you installed manually and want to enable auto-start, create a desktop file at `~/.config/autostart/audio-toggle.desktop`:
-
-```ini
-[Desktop Entry]
-Type=Application
-Name=Audio Toggle
-Comment=Toggle between audio devices
-Exec=python3 /home/YOUR_USERNAME/.local/share/audio_toggle/audio_toggle_linux.py
-Icon=audio-volume-high
-Terminal=false
-X-GNOME-Autostart-enabled=true
-```
-
-## Troubleshooting
-
-### Tray icon doesn't appear
-
-**GNOME Desktop:**
-GNOME removed native tray icon support. Install an extension:
-```bash
-# Ubuntu/Debian
-sudo apt install gnome-shell-extension-appindicator
-
-# Fedora
-sudo dnf install gnome-shell-extension-appindicator
-
-# Then enable it
-gnome-extensions enable appindicatorsupport@rgcjonas.gmail.com
-```
-
-**Other desktops:** KDE Plasma, XFCE, Cinnamon, MATE should work out of the box.
-
-### "pactl not found" error
-```bash
-# Ubuntu/Debian
-sudo apt install pulseaudio-utils
-
-# Fedora
-sudo dnf install pulseaudio-utils
-
-# Arch
-sudo pacman -S pulseaudio
-```
-
-### Python dependencies not found
-```bash
-# Ubuntu/Debian
-sudo apt install python3-gi gir1.2-appindicator3-0.1
-
-# Fedora
-sudo dnf install python3-gobject libappindicator-gtk3
-
-# Arch
-sudo pacman -S python-gobject libappindicator-gtk3
-```
-
-### Notifications don't work
-```bash
-# Ubuntu/Debian
-sudo apt install libnotify-bin
-
-# Fedora
-sudo dnf install libnotify
-
-# Arch
-sudo pacman -S libnotify
-```
-
-### Audio doesn't switch
-- Check if PulseAudio/PipeWire is running: `pactl info`
-- List devices: `pactl list short sinks` and `pactl list short sources`
-- Reconfigure: `python3 ~/.local/share/audio_toggle/audio_toggle_linux.py --configure`
-
-## Uninstall
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/copilot/linux-version-installation/uninstall_linux.sh | bash
-```
-
-Or if you have the uninstall script locally:
-```bash
-bash uninstall_linux.sh
-```
+### Linux
+- **Technology**: Python 3 with GTK3 and AppIndicator3
+- **Audio API**: pactl (PulseAudio/PipeWire compatible)
+- **System Tray**: AppIndicator3 (works on most desktop environments)
+- **Requirements**: Python 3.6+, PulseAudio or PipeWire
+- **Auto-Start**: XDG autostart
+- **Supported Distros**: Ubuntu, Debian, Fedora, RHEL, Arch, Manjaro, openSUSE
+- **Desktop Environments**: KDE, XFCE, Cinnamon, MATE, Budgie (GNOME requires extension)
+- **[Full Linux Documentation →](README_LINUX.md)**
 
 ## How It Works
 
-The application uses:
-- **PyGObject (python3-gi)** - Python bindings for GTK
-- **AppIndicator3** - System tray icon library
-- **pactl** - PulseAudio/PipeWire control utility
-- **libnotify** - Desktop notifications
-- **systemd/XDG autostart** - Auto-start on login
+The application allows you to configure two audio profiles:
 
-The app queries PulseAudio/PipeWire for the current default audio devices and switches between your configured devices based on the current state.
+1. **Profile 1 (Headset/Headphones)**
+   - Output: Your headset or headphones
+   - Input: Your headset microphone
 
-## Desktop Environment Compatibility
+2. **Profile 2 (Speakers/Desktop)**
+   - Output: Your desktop speakers or monitor audio
+   - Input: Your webcam or secondary microphone
 
-| Desktop Environment | System Tray Support | Status |
-|---------------------|---------------------|---------|
-| KDE Plasma | Native | ✅ Works |
-| XFCE | Native | ✅ Works |
-| Cinnamon | Native | ✅ Works |
-| MATE | Native | ✅ Works |
-| LXDE/LXQt | Native | ✅ Works |
-| GNOME | Requires extension | ⚠️ Needs appindicator extension |
-| Budgie | Native | ✅ Works |
-| Deepin | Native | ✅ Works |
+With a single click, toggle between these two configurations - both output and input devices switch automatically.
 
-For GNOME users: Install `gnome-shell-extension-appindicator` to enable system tray icons.
+## Configuration
+
+All platforms use an interactive configuration wizard that:
+1. Lists all available audio devices
+2. Uses **NUMBERS** for output devices (speakers/headphones)
+3. Uses **LETTERS** for input devices (microphones)
+4. Saves your preferences to a configuration file
+
+### Example Configuration
+```
+=== OUTPUT DEVICES - Use NUMBERS ===
+  [0] Built-in Speakers
+  [1] USB Headset
+  [2] Bluetooth Headphones
+
+=== INPUT DEVICES - Use LETTERS ===
+  [A] Built-in Microphone
+  [B] USB Headset Mic
+  [C] Webcam Microphone
+
+1. Speaker/Monitor (OUTPUT - enter number): 0
+2. Secondary Microphone (INPUT - enter letter): A
+3. Headset Output (OUTPUT - enter number): 1
+4. Headset Microphone (INPUT - enter letter): B
+```
+
+## Use Cases
+
+- **Gaming**: Quick switch between gaming headset and desktop speakers
+- **Work**: Toggle between work headphones and meeting speakerphone
+- **Streaming**: Easy audio output switching for broadcasting
+- **Accessibility**: Avoid digging through system sound settings repeatedly
+
+## Uninstall
+
+### Windows
+```powershell
+# From the install directory
+.\uninstall.ps1
+```
+
+### macOS
+```bash
+bash uninstall_mac.sh
+# Or via curl:
+curl -fsSL https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/copilot/mac-version-installation/uninstall_mac.sh | bash
+```
+
+### Linux
+```bash
+bash uninstall_linux.sh
+# Or via curl:
+curl -fsSL https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/copilot/mac-version-installation/uninstall_linux.sh | bash
+```
+
+## Platform Comparison
+
+| Feature | Windows | macOS | Linux |
+|---------|---------|-------|-------|
+| **Language** | PowerShell | Python 3 | Python 3 |
+| **System Tray** | ✅ Native | ✅ Menu Bar | ✅ AppIndicator |
+| **Auto-Start** | ✅ Startup Folder | ✅ LaunchAgents | ✅ XDG Autostart |
+| **Dependencies** | None | Homebrew, rumps | GTK3, AppIndicator3 |
+| **Audio System** | Core Audio API | CoreAudio | PulseAudio/PipeWire |
+| **Install Time** | < 1 min | 2-3 min | 2-3 min |
+| **Configuration** | Numbers/Letters | Numbers/Letters | Numbers/Letters |
+
+## Troubleshooting
+
+### Windows
+- Check PowerShell version: `$PSVersionTable.PSVersion`
+- Verify script execution: `Get-ExecutionPolicy`
+- Check system tray for icon
+
+### macOS
+- Check logs: `tail -f ~/Library/Logs/audio_toggle.log`
+- Verify SwitchAudioSource: `which SwitchAudioSource`
+- Check LaunchAgent: `launchctl list | grep audiotoggle`
+
+### Linux
+- Check PulseAudio/PipeWire: `pactl info`
+- Verify system tray support: Install gnome-shell-extension-appindicator for GNOME
+- Check autostart: `ls ~/.config/autostart/`
+
+## Contributing
+
+Contributions welcome! Feel free to:
+- Report bugs or request features
+- Submit pull requests for improvements
+- Add support for additional platforms or features
+- Improve documentation
 
 ## License
 
 MIT License - Free to use, modify, and distribute.
 
-## Contributing
+Copyright (c) Pablo Echavarria
 
-Feel free to fork and submit pull requests for:
-- Additional features
-- Improved error handling
-- Support for more desktop environments
-- Custom tray icons
-- Support for more than 2 device configurations
+See [LICENSE](LICENSE) file for details.
+
+## Support
+
+If you find this project helpful, consider:
+- ⭐ Starring the repository
+- 🐛 Reporting bugs or suggesting features
+- 💝 [Supporting the developer](DONATE.md)
+
+---
+
+**Platform-Specific Documentation:**
+- [Windows Documentation](https://github.com/pechavarriaa/WindowsAudioProfiles/blob/main/README.md) (on main branch)
+- [macOS Documentation](README_MAC.md)
+- [Linux Documentation](README_LINUX.md)
