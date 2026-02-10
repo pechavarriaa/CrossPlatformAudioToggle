@@ -19,7 +19,7 @@ except ImportError:
 
 class AudioToggle(rumps.App):
     def __init__(self):
-        super(AudioToggle, self).__init__("🔊", quit_button=None)
+        super(AudioToggle, self).__init__("AudioToggle", title="🔊", quit_button=None)
         self.config_file = Path.home() / ".config" / "audio_toggle" / "config.json"
         self.load_config()
         self.menu = [
@@ -65,14 +65,14 @@ class AudioToggle(rumps.App):
             json.dump(config, f, indent=2)
     
     def get_audio_devices(self, device_type='output'):
-        """Get list of audio devices using SwitchAudioSource"""
+        """Get list of audio devices using /opt/homebrew/bin/SwitchAudioSource"""
         try:
-            cmd = ['SwitchAudioSource', '-a', '-t', device_type]
+            cmd = ['/opt/homebrew/bin/SwitchAudioSource', '-a', '-t', device_type]
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
             devices = [line.strip() for line in result.stdout.split('\n') if line.strip()]
             return devices
         except subprocess.CalledProcessError:
-            self.show_notification("Error", "SwitchAudioSource not found. Please install it.")
+            self.show_notification("Error", "/opt/homebrew/bin/SwitchAudioSource not found. Please install it.")
             return []
         except Exception as e:
             self.show_notification("Error", f"Failed to get devices: {e}")
@@ -81,7 +81,7 @@ class AudioToggle(rumps.App):
     def get_current_device(self, device_type='output'):
         """Get current default audio device"""
         try:
-            cmd = ['SwitchAudioSource', '-c', '-t', device_type]
+            cmd = ['/opt/homebrew/bin/SwitchAudioSource', '-c', '-t', device_type]
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
             return result.stdout.strip()
         except Exception as e:
@@ -91,7 +91,7 @@ class AudioToggle(rumps.App):
     def set_audio_device(self, device_name, device_type='output'):
         """Set default audio device"""
         try:
-            cmd = ['SwitchAudioSource', '-s', device_name, '-t', device_type]
+            cmd = ['/opt/homebrew/bin/SwitchAudioSource', '-s', device_name, '-t', device_type]
             subprocess.run(cmd, check=True, capture_output=True)
             return True
         except Exception as e:
@@ -179,11 +179,11 @@ def configure_interactive():
     """Interactive configuration mode"""
     print("\n=== Configure Audio Toggle for macOS ===\n")
     
-    # Check if SwitchAudioSource is available
+    # Check if /opt/homebrew/bin/SwitchAudioSource is available
     try:
-        subprocess.run(['SwitchAudioSource', '-h'], capture_output=True, check=True)
+        subprocess.run(['/opt/homebrew/bin/SwitchAudioSource', '-h'], capture_output=True, check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
-        print("Error: SwitchAudioSource not found.")
+        print("Error: /opt/homebrew/bin/SwitchAudioSource not found.")
         print("Install with: brew install switchaudio-osx")
         return
     
@@ -193,11 +193,11 @@ def configure_interactive():
     input_devices = []
     
     try:
-        result = subprocess.run(['SwitchAudioSource', '-a', '-t', 'output'], 
+        result = subprocess.run(['/opt/homebrew/bin/SwitchAudioSource', '-a', '-t', 'output'], 
                               capture_output=True, text=True, check=True)
         output_devices = [line.strip() for line in result.stdout.split('\n') if line.strip()]
         
-        result = subprocess.run(['SwitchAudioSource', '-a', '-t', 'input'], 
+        result = subprocess.run(['/opt/homebrew/bin/SwitchAudioSource', '-a', '-t', 'input'], 
                               capture_output=True, text=True, check=True)
         input_devices = [line.strip() for line in result.stdout.split('\n') if line.strip()]
     except Exception as e:
