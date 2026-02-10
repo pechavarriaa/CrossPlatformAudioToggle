@@ -7,19 +7,19 @@ A lightweight application that adds a **system tray/menu bar icon** to quickly t
 ### Windows 10/11
 Run this in PowerShell:
 ```powershell
-irm https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/pechavarriaa/CrossPlatformAudioToggle/main/install.ps1 | iex
 ```
 
 ### macOS
 Run this in Terminal:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/main/install_mac.sh | bash
+curl -fsSL https://raw.githubusercontent.com/pechavarriaa/CrossPlatformAudioToggle/main/install_mac.sh | bash
 ```
 
 ### Linux (Ubuntu, Fedora, Arch, openSUSE)
 Run this in your terminal:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/main/install_linux.sh | bash
+curl -fsSL https://raw.githubusercontent.com/pechavarriaa/CrossPlatformAudioToggle/main/install_linux.sh | bash
 ```
 
 ## Features
@@ -119,14 +119,14 @@ All platforms use an interactive configuration wizard that:
 ```bash
 bash uninstall_mac.sh
 # Or via curl:
-curl -fsSL https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/main/uninstall_mac.sh | bash
+curl -fsSL https://raw.githubusercontent.com/pechavarriaa/CrossPlatformAudioToggle/main/uninstall_mac.sh | bash
 ```
 
 ### Linux
 ```bash
 bash uninstall_linux.sh
 # Or via curl:
-curl -fsSL https://raw.githubusercontent.com/pechavarriaa/WindowsAudioProfiles/main/uninstall_linux.sh | bash
+curl -fsSL https://raw.githubusercontent.com/pechavarriaa/CrossPlatformAudioToggle/main/uninstall_linux.sh | bash
 ```
 
 ## Platform Comparison
@@ -184,6 +184,6 @@ If you find this project helpful, consider:
 ---
 
 **Platform-Specific Documentation:**
-- [Windows Documentation](https://github.com/pechavarriaa/WindowsAudioProfiles/blob/main/README.md) (on main branch)
+- [Windows Documentation](https://github.com/pechavarriaa/CrossPlatformAudioToggle/blob/main/README.md) (on main branch)
 - [macOS Documentation](README_MAC.md)
 - [Linux Documentation](README_LINUX.md)
