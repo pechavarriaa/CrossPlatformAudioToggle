@@ -1,4 +1,4 @@
-# Audio Toggle - Cross-Platform Audio Device Switcher
+# Audio Toggle - Cross Platform Audio Device Switcher
 
 A lightweight application that adds a **system tray/menu bar icon** to quickly toggle between audio devices. Switch between headphones and speakers with a single click. Available for **Windows**, **macOS**, and **Linux**.
 
