@@ -77,7 +77,7 @@ class AudioToggle:
         """Detect if using PulseAudio or PipeWire"""
         try:
             # Check for PipeWire
-            result = subprocess.run(['pactl', 'info'], capture_output=True, text=True)
+            result = subprocess.run(['/usr/bin/pactl', 'info'], capture_output=True, text=True)
             if 'PipeWire' in result.stdout:
                 return 'pipewire'
             return 'pulseaudio'
@@ -120,36 +120,40 @@ class AudioToggle:
             json.dump(config, f, indent=2)
     
     def get_audio_devices(self, device_type='sinks'):
-        """Get list of audio devices using pactl"""
+        """Get list of audio devices using pactl - optimized to run pactl only once"""
         try:
-            cmd = ['pactl', 'list', 'short', device_type]
+            # Get full device list with descriptions in one call
+            cmd = ['/usr/bin/pactl', 'list', device_type]
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+
             devices = []
-            for line in result.stdout.strip().split('\n'):
-                if line.strip():
-                    parts = line.split('\t')
-                    if len(parts) >= 2:
-                        device_id = parts[1]
-                        # Get friendly name
-                        name_cmd = ['pactl', 'list', device_type]
-                        name_result = subprocess.run(name_cmd, capture_output=True, text=True, check=True)
-                        
-                        # Parse friendly name from full output
-                        friendly_name = device_id
-                        in_device = False
-                        for name_line in name_result.stdout.split('\n'):
-                            if f'Name: {device_id}' in name_line:
-                                in_device = True
-                            elif in_device and 'Description:' in name_line:
-                                friendly_name = name_line.split('Description:')[1].strip()
-                                break
-                            elif in_device and ('Sink #' in name_line or 'Source #' in name_line):
-                                break
-                        
-                        devices.append({
-                            'id': device_id,
-                            'name': friendly_name
-                        })
+            current_device = {}
+
+            for line in result.stdout.split('\n'):
+                line = line.strip()
+
+                # New device entry
+                if line.startswith('Name:'):
+                    if current_device and 'id' in current_device:
+                        # Skip monitor sources for inputs
+                        if device_type != 'sources' or not current_device['id'].endswith('.monitor'):
+                            devices.append(current_device)
+                    current_device = {'id': line.split('Name:')[1].strip()}
+
+                # Get description
+                elif line.startswith('Description:') and 'id' in current_device:
+                    current_device['name'] = line.split('Description:')[1].strip()
+
+            # Add last device
+            if current_device and 'id' in current_device:
+                if device_type != 'sources' or not current_device['id'].endswith('.monitor'):
+                    devices.append(current_device)
+
+            # Ensure all devices have a name
+            for device in devices:
+                if 'name' not in device:
+                    device['name'] = device['id']
+
             return devices
         except Exception as e:
             print(f"Error getting devices: {e}")
@@ -158,7 +162,7 @@ class AudioToggle:
     def get_current_device(self, device_type='sink'):
         """Get current default audio device"""
         try:
-            cmd = ['pactl', f'get-default-{device_type}']
+            cmd = ['/usr/bin/pactl', f'get-default-{device_type}']
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
             return result.stdout.strip()
         except Exception as e:
@@ -168,7 +172,7 @@ class AudioToggle:
     def set_audio_device(self, device_id, device_type='sink'):
         """Set default audio device"""
         try:
-            cmd = ['pactl', f'set-default-{device_type}', device_id]
+            cmd = ['/usr/bin/pactl', f'set-default-{device_type}', device_id]
             subprocess.run(cmd, check=True, capture_output=True)
             return True
         except Exception as e:
@@ -232,7 +236,7 @@ class AudioToggle:
     def show_notification(self, title, message):
         """Show desktop notification"""
         try:
-            subprocess.run(['notify-send', title, message], check=False)
+            subprocess.run(['/usr/bin/notify-send', title, message], check=False)
         except Exception:
             print(f"{title}: {message}")
     
@@ -268,13 +272,53 @@ class AudioToggle:
         Gtk.main()
 
 
+def parse_pactl_devices(device_type):
+    """Helper function to parse devices from pactl output - runs pactl only once!"""
+    try:
+        cmd = ['/usr/bin/pactl', 'list', device_type]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+
+        devices = []
+        current_device = {}
+
+        for line in result.stdout.split('\n'):
+            line = line.strip()
+
+            # New device entry
+            if line.startswith('Name:'):
+                if current_device and 'id' in current_device:
+                    # Skip monitor sources for inputs
+                    if device_type != 'sources' or not current_device['id'].endswith('.monitor'):
+                        devices.append(current_device)
+                current_device = {'id': line.split('Name:')[1].strip()}
+
+            # Get description
+            elif line.startswith('Description:') and 'id' in current_device:
+                current_device['name'] = line.split('Description:')[1].strip()
+
+        # Add last device
+        if current_device and 'id' in current_device:
+            if device_type != 'sources' or not current_device['id'].endswith('.monitor'):
+                devices.append(current_device)
+
+        # Ensure all devices have a name
+        for device in devices:
+            if 'name' not in device:
+                device['name'] = device['id']
+
+        return devices
+    except Exception as e:
+        print(f"Error getting devices: {e}")
+        return []
+
+
 def configure_interactive():
     """Interactive configuration mode"""
     print("\n=== Configure Audio Toggle for Linux ===\n")
-    
+
     # Check audio system
     try:
-        result = subprocess.run(['pactl', 'info'], capture_output=True, text=True, check=True)
+        result = subprocess.run(['/usr/bin/pactl', 'info'], capture_output=True, text=True, check=True)
         if 'PipeWire' in result.stdout:
             print("Detected audio system: PipeWire")
         else:
@@ -282,69 +326,15 @@ def configure_interactive():
     except FileNotFoundError:
         print("Error: pactl not found. Please install PulseAudio or PipeWire.")
         return
-    
+
     print("\nFetching audio devices...\n")
-    
-    # Get devices
-    try:
-        # Output devices (sinks)
-        sink_cmd = ['pactl', 'list', 'short', 'sinks']
-        sink_result = subprocess.run(sink_cmd, capture_output=True, text=True, check=True)
-        output_devices = []
-        for line in sink_result.stdout.strip().split('\n'):
-            if line.strip():
-                parts = line.split('\t')
-                if len(parts) >= 2:
-                    device_id = parts[1]
-                    # Get friendly name
-                    name_cmd = ['pactl', 'list', 'sinks']
-                    name_result = subprocess.run(name_cmd, capture_output=True, text=True, check=True)
-                    
-                    friendly_name = device_id
-                    in_device = False
-                    for name_line in name_result.stdout.split('\n'):
-                        if f'Name: {device_id}' in name_line:
-                            in_device = True
-                        elif in_device and 'Description:' in name_line:
-                            friendly_name = name_line.split('Description:')[1].strip()
-                            break
-                        elif in_device and 'Sink #' in name_line:
-                            break
-                    
-                    output_devices.append({'id': device_id, 'name': friendly_name})
-        
-        # Input devices (sources)
-        source_cmd = ['pactl', 'list', 'short', 'sources']
-        source_result = subprocess.run(source_cmd, capture_output=True, text=True, check=True)
-        input_devices = []
-        for line in source_result.stdout.strip().split('\n'):
-            if line.strip():
-                parts = line.split('\t')
-                if len(parts) >= 2:
-                    device_id = parts[1]
-                    # Skip monitor devices
-                    if '.monitor' in device_id:
-                        continue
-                    
-                    # Get friendly name
-                    name_cmd = ['pactl', 'list', 'sources']
-                    name_result = subprocess.run(name_cmd, capture_output=True, text=True, check=True)
-                    
-                    friendly_name = device_id
-                    in_device = False
-                    for name_line in name_result.stdout.split('\n'):
-                        if f'Name: {device_id}' in name_line:
-                            in_device = True
-                        elif in_device and 'Description:' in name_line:
-                            friendly_name = name_line.split('Description:')[1].strip()
-                            break
-                        elif in_device and 'Source #' in name_line:
-                            break
-                    
-                    input_devices.append({'id': device_id, 'name': friendly_name})
-        
-    except Exception as e:
-        print(f"Error getting devices: {e}")
+
+    # Get devices using optimized helper function
+    output_devices = parse_pactl_devices('sinks')
+    input_devices = parse_pactl_devices('sources')
+
+    if not output_devices or not input_devices:
+        print("Error: Could not retrieve audio devices.")
         return
     
     # Letters for input devices (matching Windows installer pattern)
