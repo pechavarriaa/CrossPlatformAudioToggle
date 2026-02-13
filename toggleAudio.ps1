@@ -356,11 +356,24 @@ else {
 
 function Get-ShortDeviceName {
     param([string]$DeviceName)
-    # Simplify device names for display
-    $name = $DeviceName -replace '\([^)]*\)', '' # Remove parentheses content
+    # Extract brand/model from parentheses, fall back to full name if no parentheses
+    if ($DeviceName -match '\(([^)]+)\)') {
+        $name = $matches[1]
+    } else {
+        $name = $DeviceName
+    }
+
+    # Clean up trademark symbols and redundant text
+    $name = $name -replace '\(R\)', '' `
+                  -replace '®', '' `
+                  -replace '™', '' `
+                  -replace 'Microsoft®?\s*', '' `
+                  -replace '\s+', ' '
     $name = $name.Trim()
-    if ($name.Length -gt 25) {
-        $name = $name.Substring(0, 22) + "..."
+
+    # Truncate if too long
+    if ($name.Length -gt 30) {
+        $name = $name.Substring(0, 27) + "..."
     }
     return $name
 }
