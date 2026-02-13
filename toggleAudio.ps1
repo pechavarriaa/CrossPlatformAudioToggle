@@ -1,5 +1,4 @@
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName System.Drawing
+﻿Add-Type -AssemblyName System.Drawing
 
 $csharpCode = @"
 using System;
@@ -321,13 +320,39 @@ namespace CoreAudioApi {
 "@
 
 Add-Type -TypeDefinition $csharpCode
+Add-Type -AssemblyName System.Windows.Forms
 
-# === CONFIGURE YOUR DEVICES HERE ===
-# Run Get-AudioDevices to see available device names
-$speakerDevice = "Speakers (Lenovo USB Audio)"
-$secondMicDevice = "Microphone (Anker PowerConf C200)"
-$headsetOutput = "Headset Earphone (HyperX Virtual Surround Sound)"
-$headsetInput = "Headset Microphone (HyperX Virtual Surround Sound)"
+# === LOAD CONFIGURATION FROM FILE ===
+$configPath = Join-Path $env:LOCALAPPDATA "AudioToggle\config.json"
+
+if (Test-Path $configPath) {
+    try {
+        $configJson = [System.IO.File]::ReadAllText($configPath, [System.Text.Encoding]::UTF8)
+        $config = $configJson | ConvertFrom-Json
+        $speakerDevice = $config.profile1.output
+        $secondMicDevice = $config.profile1.input
+        $headsetOutput = $config.profile2.output
+        $headsetInput = $config.profile2.input
+    }
+    catch {
+        [System.Windows.Forms.MessageBox]::Show(
+            "Failed to load configuration from $configPath`n`nError: $($_.Exception.Message)`n`nPlease run install.ps1 -Reconfigure",
+            "Configuration Error",
+            [System.Windows.Forms.MessageBoxButtons]::OK,
+            [System.Windows.Forms.MessageBoxIcon]::Error
+        )
+        exit 1
+    }
+}
+else {
+    [System.Windows.Forms.MessageBox]::Show(
+        "Configuration file not found: $configPath`n`nPlease run install.ps1 to configure your audio devices.",
+        "Configuration Missing",
+        [System.Windows.Forms.MessageBoxButtons]::OK,
+        [System.Windows.Forms.MessageBoxIcon]::Warning
+    )
+    exit 1
+}
 
 function Toggle-AudioSetup {
     try {

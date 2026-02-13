@@ -25,6 +25,7 @@ $installDir = Join-Path $env:LOCALAPPDATA "AudioToggle"
 $scriptPath = Join-Path $installDir "toggleAudio.ps1"
 $installScriptPath = Join-Path $installDir "install.ps1"
 $uninstallPath = Join-Path $installDir "uninstall.ps1"
+$configPath = Join-Path $installDir "config.json"
 
 function Write-Status {
     param([string]$Message)
@@ -43,7 +44,9 @@ function Write-Success {
 function ConvertTo-SavedDeviceName {
     param([string]$Name)
     if ([string]::IsNullOrWhiteSpace($Name)) { return $Name }
+    # Remove leading selection tokens like "4- " or "A: "
     $cleaned = $Name -replace '^\s*(?:\d+|[A-Za-z])\s*[-:]\s*', ''
+    # Remove parenthesized selection tokens like "(4- " -> "("
     $cleaned = $cleaned -replace '\(\s*(?:\d+|[A-Za-z])\s*-\s*', '('
     return $cleaned
 }
@@ -250,21 +253,30 @@ if (-not $Silent) {
         
         $configured = $true
     }
-    
-    # Persist clean endpoint names only (without chooser prefixes)
-    $speakerDevice = ConvertTo-SavedDeviceName $speakerDevice
-    $secondMicDevice = ConvertTo-SavedDeviceName $secondMicDevice
-    $headsetOutput = ConvertTo-SavedDeviceName $headsetOutput
-    $headsetInput = ConvertTo-SavedDeviceName $headsetInput
 
-    # Update the script with user's devices
-    $scriptContent = $scriptContent -replace '\$speakerDevice = ".*?"', "`$speakerDevice = `"$speakerDevice`""
-    $scriptContent = $scriptContent -replace '\$headsetOutput = ".*?"', "`$headsetOutput = `"$headsetOutput`""
-    $scriptContent = $scriptContent -replace '\$headsetInput = ".*?"', "`$headsetInput = `"$headsetInput`""
-    $scriptContent = $scriptContent -replace '\$secondMicDevice = ".*?"', "`$secondMicDevice = `"$secondMicDevice`""
-    
-    Set-Content -Path $scriptPath -Value $scriptContent -Encoding UTF8
-    Write-Success "Configuration saved!"
+    # Strip selection prefixes before saving (e.g., "4- " -> "")
+    $speakerDeviceClean = ConvertTo-SavedDeviceName $speakerDevice
+    $secondMicDeviceClean = ConvertTo-SavedDeviceName $secondMicDevice
+    $headsetOutputClean = ConvertTo-SavedDeviceName $headsetOutput
+    $headsetInputClean = ConvertTo-SavedDeviceName $headsetInput
+
+    # Save cleaned device names to JSON config file
+    $config = @{
+        profile1 = @{
+            output = $speakerDeviceClean
+            input = $secondMicDeviceClean
+        }
+        profile2 = @{
+            output = $headsetOutputClean
+            input = $headsetInputClean
+        }
+    }
+
+    # Save to JSON with UTF-8 encoding
+    $configJson = $config | ConvertTo-Json -Depth 10
+    [System.IO.File]::WriteAllText($configPath, $configJson, [System.Text.Encoding]::UTF8)
+
+    Write-Success "Configuration saved to: $configPath"
     Write-Host ""
     
     Write-Host "Launch from Start Menu: 'Audio Toggle'" -ForegroundColor White
