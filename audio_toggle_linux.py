@@ -5,11 +5,16 @@ Provides a system tray icon to quickly toggle between audio devices on Linux.
 Supports PulseAudio and PipeWire.
 """
 
+# Unique identifier for this Audio Toggle installation
+AUDIO_TOGGLE_ID = "AudioToggle-pechavarriaa-CrossPlatformAudioToggle-v1.0"
+
 import subprocess
 import json
 import os
 import sys
 import time
+import fcntl
+import atexit
 from pathlib import Path
 import signal
 
@@ -30,6 +35,17 @@ except ImportError:
 class AudioToggle:
     def __init__(self):
         self.config_file = Path.home() / ".config" / "audio_toggle" / "config.json"
+        self.lockfile_path = Path.home() / ".config" / "audio_toggle" / ".audio_toggle.lock"
+        self.lockfile = None
+
+        # Ensure lock directory exists
+        self.lockfile_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Try to acquire lock
+        if not self._acquire_lock():
+            print("Audio Toggle is already running.")
+            sys.exit(0)
+
         self.load_config()
         
         # Detect audio system (PulseAudio or PipeWire)
@@ -73,7 +89,36 @@ class AudioToggle:
         # Check configuration
         if not all([self.speaker_device, self.headset_output, self.speaker_input, self.headset_input]):
             self.show_notification("Configuration Required", "Please configure your audio devices first.")
-    
+
+    def _acquire_lock(self):
+        """Acquire exclusive lock to prevent multiple instances"""
+        try:
+            self.lockfile = open(self.lockfile_path, 'w')
+            fcntl.flock(self.lockfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            # Write PID to lockfile
+            self.lockfile.write(str(os.getpid()))
+            self.lockfile.flush()
+            # Register cleanup
+            atexit.register(self._release_lock)
+            return True
+        except IOError:
+            # Lock already held by another process
+            return False
+        except Exception as e:
+            print(f"Warning: Could not acquire lock: {e}")
+            return True  # Continue anyway if lock fails
+
+    def _release_lock(self):
+        """Release the lock file"""
+        try:
+            if self.lockfile:
+                fcntl.flock(self.lockfile.fileno(), fcntl.LOCK_UN)
+                self.lockfile.close()
+            if self.lockfile_path.exists():
+                self.lockfile_path.unlink()
+        except Exception:
+            pass  # Ignore errors during cleanup
+
     def detect_audio_system(self):
         """Detect if using PulseAudio or PipeWire"""
         try:
@@ -329,6 +374,7 @@ class AudioToggle:
     
     def quit(self, _):
         """Quit the application"""
+        self._release_lock()
         Gtk.main_quit()
     
     def run(self):
