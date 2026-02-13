@@ -363,12 +363,12 @@ function Get-ShortDeviceName {
         $name = $DeviceName
     }
 
-    # Clean up trademark symbols and redundant text
-    $name = $name -replace '\(R\)', '' `
-                  -replace '®', '' `
-                  -replace '™', '' `
-                  -replace 'Microsoft®?\s*', '' `
-                  -replace '\s+', ' '
+    # Remove any remaining parentheses and their content (including partial ones)
+    $name = $name -replace '\([^)]*\)', ''  # Remove complete parentheses pairs
+    $name = $name -replace '\([^)]*$', ''    # Remove opening paren with no close
+    $name = $name -replace '\(', ''          # Remove any remaining opening parens
+    $name = $name -replace '\)', ''          # Remove any remaining closing parens
+    $name = $name -replace '\s+', ' '        # Clean up multiple spaces
     $name = $name.Trim()
 
     # Truncate if too long
