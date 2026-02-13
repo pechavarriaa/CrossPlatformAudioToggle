@@ -5,7 +5,6 @@ $csharpCode = @"
 using System;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
-using System.Text;
 
 
 namespace CoreAudioApi {
@@ -186,46 +185,7 @@ namespace CoreAudioApi {
         }
 
 
-        private static string NormalizeDeviceName(string name) {
-            if (string.IsNullOrEmpty(name)) return string.Empty;
-            string cleaned = name
-                .Replace("Ãƒâ€šÃ‚Â®", "®")
-                .Replace("Ã‚Â®", "®")
-                .Replace("Â®", "®")
-                .Replace("Ã‚Â", "")
-                .Replace("Â", "")
-                .Normalize(NormalizationForm.FormKC);
-
-            var sb = new StringBuilder(cleaned.Length);
-            bool lastWasSpace = false;
-            foreach (char c in cleaned) {
-                if (char.IsWhiteSpace(c)) {
-                    if (!lastWasSpace) {
-                        sb.Append(' ');
-                        lastWasSpace = true;
-                    }
-                } else {
-                    sb.Append(c);
-                    lastWasSpace = false;
-                }
-            }
-            return sb.ToString().Trim();
-        }
-
-        private static string CanonicalizeForMatch(string name) {
-            string normalized = NormalizeDeviceName(name);
-            var sb = new StringBuilder(normalized.Length);
-            foreach (char c in normalized) {
-                if (char.IsLetterOrDigit(c)) {
-                    sb.Append(char.ToLowerInvariant(c));
-                }
-            }
-            return sb.ToString();
-        }
-
         private static string GetDeviceId(string deviceName) {
-            string normalizedTarget = NormalizeDeviceName(deviceName);
-            string canonicalTarget = CanonicalizeForMatch(deviceName);
             IMMDeviceCollection deviceCollection;
             deviceEnumerator.EnumAudioEndpoints(EDataFlow.eAll, 1, out deviceCollection);
             int count;
@@ -238,14 +198,7 @@ namespace CoreAudioApi {
                 PROPERTYKEY propertyKey = new PROPERTYKEY { fmtid = new Guid("a45c254e-df1c-4efd-8020-67d146a850e0"), pid = 14 }; // PKEY_Device_FriendlyName
                 PROPVARIANT propertyValue;
                 propertyStore.GetValue(ref propertyKey, out propertyValue);
-                string friendlyName = Marshal.PtrToStringUni(propertyValue.pwszVal);
-                string normalizedFriendly = NormalizeDeviceName(friendlyName);
-                string canonicalFriendly = CanonicalizeForMatch(friendlyName);
-                if (
-                    friendlyName == deviceName ||
-                    normalizedFriendly.Equals(normalizedTarget, StringComparison.OrdinalIgnoreCase) ||
-                    (canonicalTarget.Length > 0 && canonicalFriendly.Equals(canonicalTarget, StringComparison.OrdinalIgnoreCase))
-                ) {
+                if (Marshal.PtrToStringUni(propertyValue.pwszVal) == deviceName) {
                     string deviceId;
                     device.GetId(out deviceId);
                     return deviceId;
@@ -286,8 +239,6 @@ function Toggle-AudioSetup {
             [CoreAudioApi.CoreAudioController]::SetDefaultDevice($secondMicDevice, [CoreAudioApi.ERole]::eConsole)
             [CoreAudioApi.CoreAudioController]::SetDefaultDevice($secondMicDevice, [CoreAudioApi.ERole]::eMultimedia)
             [CoreAudioApi.CoreAudioController]::SetDefaultDevice($secondMicDevice, [CoreAudioApi.ERole]::eCommunications)
-            # Brief delay to allow camera-embedded microphones to initialize
-            Start-Sleep -Milliseconds 500
             [CoreAudioApi.CoreAudioController]::SetDefaultDevice($speakerDevice, [CoreAudioApi.ERole]::eConsole)
             [CoreAudioApi.CoreAudioController]::SetDefaultDevice($speakerDevice, [CoreAudioApi.ERole]::eMultimedia)
             return "Switched to Profile 1"
@@ -302,8 +253,6 @@ function Toggle-AudioSetup {
             [CoreAudioApi.CoreAudioController]::SetDefaultDevice($headsetInput, [CoreAudioApi.ERole]::eConsole)
             [CoreAudioApi.CoreAudioController]::SetDefaultDevice($headsetInput, [CoreAudioApi.ERole]::eMultimedia)
             [CoreAudioApi.CoreAudioController]::SetDefaultDevice($headsetInput, [CoreAudioApi.ERole]::eCommunications)
-            # Brief delay to allow camera-embedded microphones to initialize
-            Start-Sleep -Milliseconds 500
             [CoreAudioApi.CoreAudioController]::SetDefaultDevice($headsetOutput, [CoreAudioApi.ERole]::eConsole)
             [CoreAudioApi.CoreAudioController]::SetDefaultDevice($headsetOutput, [CoreAudioApi.ERole]::eMultimedia)
             return "Switched to Profile 2"
@@ -370,9 +319,8 @@ $menuConfigure.Add_Click({
     if (Test-Path $installPath) {
         Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-File", "`"$installPath`"", "-Reconfigure"
     } else {
-        $notifyIcon.BalloonTipTitle = "Audio Toggle"
-        $notifyIcon.BalloonTipText = "Install script not found locally. Reinstall with: irm https://raw.githubusercontent.com/pechavarriaa/CrossPlatformAudioToggle/main/install.ps1 | iex"
-        $notifyIcon.ShowBalloonTip(5000)
+        # Download and run if not found locally
+        Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy", "Bypass", "-Command", "irm https://raw.githubusercontent.com/pechavarriaa/CrossPlatformAudioToggle/main/install.ps1 | iex; install.ps1 -Reconfigure"
     }
 })
 $contextMenu.Items.Add($menuConfigure)
