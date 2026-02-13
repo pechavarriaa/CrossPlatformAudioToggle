@@ -74,6 +74,9 @@ The application allows you to configure two audio profiles:
 
 With a single click, toggle between these two configurations - both output and input devices switch automatically.
 
+![Description](<img width="694" height="407" alt="AudioTogglePowerShell" src="https://github.com/user-attachments/assets/92e64a56-dd6f-449e-a71c-be7ed4fba41c" />)
+
+
 ## Configuration
 
 All platforms use an interactive configuration wizard that:
