@@ -23,6 +23,8 @@ $ErrorActionPreference = "Stop"
 $repoUrl = "https://raw.githubusercontent.com/pechavarriaa/CrossPlatformAudioToggle/main"
 $installDir = Join-Path $env:LOCALAPPDATA "AudioToggle"
 $scriptPath = Join-Path $installDir "toggleAudio.ps1"
+$installScriptPath = Join-Path $installDir "install.ps1"
+$uninstallPath = Join-Path $installDir "uninstall.ps1"
 
 function Write-Status {
     param([string]$Message)
@@ -75,6 +77,8 @@ if (-not $Reconfigure) {
     Write-Status "Downloading Audio Toggle..."
     try {
         Invoke-WebRequest -Uri "$repoUrl/toggleAudio.ps1" -OutFile $scriptPath -UseBasicParsing
+        Invoke-WebRequest -Uri "$repoUrl/install.ps1" -OutFile $installScriptPath -UseBasicParsing
+        Invoke-WebRequest -Uri "$repoUrl/uninstall.ps1" -OutFile $uninstallPath -UseBasicParsing
     } catch {
         Write-Error "Failed to download script: $_"
         exit 1
@@ -83,6 +87,8 @@ if (-not $Reconfigure) {
     # Unblock the file
     Write-Status "Unblocking script..."
     Unblock-File -Path $scriptPath
+    Unblock-File -Path $installScriptPath
+    Unblock-File -Path $uninstallPath
 
     # Create Start Menu shortcut
     Write-Status "Creating Start Menu shortcut..."
@@ -124,7 +130,7 @@ if (-not $Silent) {
     Write-Host "Loading audio devices..." -ForegroundColor Cyan
     
     # Load the script to get device list
-    $scriptContent = Get-Content $scriptPath -Raw
+    $scriptContent = Get-Content $scriptPath -Raw -Encoding UTF8
     # Execute just the C# part and Add-Type to load the API
     $csharpMatch = [regex]::Match($scriptContent, '\$csharpCode = @"(.+?)"@', [System.Text.RegularExpressions.RegexOptions]::Singleline)
     if ($csharpMatch.Success) {

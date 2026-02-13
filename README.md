@@ -114,8 +114,10 @@ All platforms use an interactive configuration wizard that:
 
 ### Windows
 ```powershell
-# From the install directory
-.\uninstall.ps1
+# Local uninstall
+& "$env:LOCALAPPDATA\AudioToggle\uninstall.ps1"
+# Or via one-liner
+irm https://raw.githubusercontent.com/pechavarriaa/CrossPlatformAudioToggle/main/uninstall.ps1 | iex
 ```
 
 ### macOS
