@@ -36,16 +36,34 @@ echo -e "Detected distribution: ${CYAN}$PRETTY_NAME${NC}\n"
 # Function to detect audio system
 detect_audio_system() {
     if command -v pactl &> /dev/null; then
-        if pactl info 2>/dev/null | grep -q "Server Name.*PipeWire"; then
+        # Check the actual running audio server
+        local pactl_info=$(pactl info 2>/dev/null)
+        if echo "$pactl_info" | grep -q "Server Name.*PipeWire"; then
             echo "pipewire"
-        else
+        elif echo "$pactl_info" | grep -q "Server Name.*PulseAudio"; then
             echo "pulseaudio"
+        else
+            # pactl exists but can't determine server, check installed packages
+            if command -v pacman &> /dev/null; then
+                if pacman -Qi pipewire-pulse &> /dev/null; then
+                    echo "pipewire"
+                elif pacman -Qi pulseaudio &> /dev/null; then
+                    echo "pulseaudio"
+                else
+                    echo "none"
+                fi
+            else
+                echo "none"
+            fi
         fi
     else
-        # Check for installed packages
+        # pactl not available, check for installed packages
         if command -v pacman &> /dev/null; then
-            if pacman -Qi pipewire-pulse &> /dev/null || pacman -Qi pipewire &> /dev/null; then
+            # Check for pipewire-pulse specifically as that's what we install
+            if pacman -Qi pipewire-pulse &> /dev/null; then
                 echo "pipewire"
+            elif pacman -Qi pulseaudio &> /dev/null; then
+                echo "pulseaudio"
             else
                 echo "none"
             fi
@@ -83,6 +101,7 @@ install_dependencies() {
                 echo -e "${CYAN}PulseAudio detected, installing PulseAudio packages...${NC}"
                 sudo pacman -S --needed --noconfirm python python-pip python-gobject gtk3 libappindicator-gtk3 libnotify pulseaudio
             else
+                # Default to PipeWire for new installations (Arch Linux default since late 2022)
                 echo -e "${YELLOW}No audio system detected. Installing PipeWire (modern default)...${NC}"
                 sudo pacman -S --needed --noconfirm python python-pip python-gobject gtk3 libappindicator-gtk3 libnotify pipewire-pulse
             fi
