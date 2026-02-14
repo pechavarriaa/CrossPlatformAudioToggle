@@ -53,9 +53,11 @@ class AudioToggle:
         self.audio_system = self.detect_audio_system()
         
         # Create indicator
+        # Use symbolic icon for better visibility in dark themes
+        # Symbolic icons adapt to light/dark themes automatically
         self.indicator = AppIndicator3.Indicator.new(
             "audio-toggle",
-            "audio-volume-high",
+            "audio-volume-high-symbolic",
             AppIndicator3.IndicatorCategory.APPLICATION_STATUS
         )
         self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)

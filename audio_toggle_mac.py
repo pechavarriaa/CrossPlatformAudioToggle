@@ -25,7 +25,14 @@ except ImportError:
 
 class AudioToggle(rumps.App):
     def __init__(self):
-        super(AudioToggle, self).__init__("AudioToggle", title="🔊", quit_button=None)
+        # Use template icon for better visibility in dark themes
+        # Template icons adapt to light/dark themes automatically
+        icon_path = Path(__file__).parent / "icons" / "speaker_template.png"
+        if icon_path.exists():
+            super(AudioToggle, self).__init__("AudioToggle", icon=str(icon_path), template=True, quit_button=None)
+        else:
+            # Fallback to emoji if icon file not found
+            super(AudioToggle, self).__init__("AudioToggle", title="🔊", quit_button=None)
         self.config_file = Path.home() / ".config" / "audio_toggle" / "config.json"
         self.lockfile_path = Path.home() / ".config" / "audio_toggle" / ".audio_toggle.lock"
         self.lockfile = None
