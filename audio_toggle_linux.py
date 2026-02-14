@@ -380,6 +380,8 @@ class AudioToggle:
             ['alacritty', '-e', 'bash', '-c', cmd_str],
             # kitty: direct command execution
             ['kitty', 'bash', '-c', cmd_str],
+            # ghostty: -e executes command
+            ['ghostty', '-e', 'bash', '-c', cmd_str],
             # foot: direct command execution
             ['foot', 'bash', '-c', cmd_str],
             # terminator: -x for command with args
