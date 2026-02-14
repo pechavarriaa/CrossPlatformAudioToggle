@@ -67,9 +67,17 @@ mkdir -p "$CONFIG_DIR"
 if [ -f "$SCRIPT_NAME" ]; then
     echo -e "${CYAN}Installing from local file...${NC}"
     cp "$SCRIPT_NAME" "$INSTALL_DIR/$SCRIPT_NAME"
+    # Copy icons directory if it exists
+    if [ -d "icons" ]; then
+        mkdir -p "$INSTALL_DIR/icons"
+        cp -r icons/* "$INSTALL_DIR/icons/"
+    fi
 else
     echo -e "${CYAN}Downloading Audio Toggle script...${NC}"
     curl -fsSL "https://raw.githubusercontent.com/pechavarriaa/CrossPlatformAudioToggle/main/$SCRIPT_NAME" -o "$INSTALL_DIR/$SCRIPT_NAME"
+    # Download template icon for dark theme support
+    mkdir -p "$INSTALL_DIR/icons"
+    curl -fsSL "https://raw.githubusercontent.com/pechavarriaa/CrossPlatformAudioToggle/main/icons/speaker_template.png" -o "$INSTALL_DIR/icons/speaker_template.png"
 fi
 
 # Make script executable
