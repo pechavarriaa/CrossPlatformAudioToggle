@@ -15,6 +15,7 @@ import sys
 import time
 import fcntl
 import atexit
+import shlex
 from pathlib import Path
 import signal
 
@@ -355,18 +356,20 @@ class AudioToggle:
         script_path = Path(__file__).resolve()
         
         # Command to execute: run configure then wait for user input to close
-        # Using escaped quotes to avoid shell interpretation issues
-        cmd_str = f'python3 {script_path} --configure; echo; echo Press Enter to close...; read'
+        # Use shlex.quote to properly escape the path for shell execution
+        quoted_path = shlex.quote(str(script_path))
+        cmd_str = f'python3 {quoted_path} --configure; echo; echo Press Enter to close...; read'
         
         # List of terminal emulators with their specific invocation patterns
         # Each entry is a complete command list to try with subprocess.Popen
+        # Note: We don't use --hold flags since the 'read' command keeps the terminal open
         terminals = [
             # gnome-terminal: modern syntax uses -- to separate terminal args from command
             ['gnome-terminal', '--', 'bash', '-c', cmd_str],
-            # konsole: --hold keeps terminal open, -e executes command
-            ['konsole', '--hold', '-e', 'bash', '-c', cmd_str],
-            # xfce4-terminal: --hold keeps terminal open, -x for command with args
-            ['xfce4-terminal', '--hold', '-x', 'bash', '-c', cmd_str],
+            # konsole: -e executes command
+            ['konsole', '-e', 'bash', '-c', cmd_str],
+            # xfce4-terminal: -x for command with args
+            ['xfce4-terminal', '-x', 'bash', '-c', cmd_str],
             # mate-terminal: -x for command with args
             ['mate-terminal', '-x', 'bash', '-c', cmd_str],
             # lxterminal: -e followed by command
@@ -382,11 +385,11 @@ class AudioToggle:
             # terminator: -x for command with args
             ['terminator', '-x', 'bash', '-c', cmd_str],
             # urxvt: -e followed by command and args
-            ['urxvt', '-hold', '-e', 'bash', '-c', cmd_str],
+            ['urxvt', '-e', 'bash', '-c', cmd_str],
             # st (suckless terminal): -e followed by command and args
             ['st', '-e', 'bash', '-c', cmd_str],
-            # xterm: -hold keeps window open, -e followed by command
-            ['xterm', '-hold', '-e', 'bash', '-c', cmd_str],
+            # xterm: -e followed by command
+            ['xterm', '-e', 'bash', '-c', cmd_str],
         ]
 
         for terminal_cmd in terminals:
