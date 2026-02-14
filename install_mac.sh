@@ -21,11 +21,16 @@ NC='\033[0m' # No Color
 
 echo -e "${CYAN}=== Audio Toggle for macOS - Installer ===${NC}\n"
 
-# Check if running on macOS
-if [[ "$OSTYPE" != "darwin"* ]]; then
-    echo -e "${RED}Error: This installer is for macOS only.${NC}"
-    exit 1
-fi
+# Check if running on macOS (POSIX-compatible pattern matching)
+case "$OSTYPE" in
+    darwin*)
+        # Running on macOS, continue
+        ;;
+    *)
+        echo -e "${RED}Error: This installer is for macOS only.${NC}"
+        exit 1
+        ;;
+esac
 
 # Check for Homebrew
 if ! command -v brew &> /dev/null; then
@@ -145,14 +150,21 @@ else
     REPLY="n"
 fi
 
-if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-    python3 "$INSTALL_DIR/$SCRIPT_NAME" --configure
+# Check if user declined configuration (POSIX-compatible pattern matching)
+case "$REPLY" in
+    [Nn]|[Nn][Oo])
+        # User explicitly declined
+        ;;
+    *)
+        # Empty or any other input means yes (default)
+        python3 "$INSTALL_DIR/$SCRIPT_NAME" --configure
 
-    echo -e "\n${YELLOW}Restarting Audio Toggle with your configuration...${NC}"
-    launchctl unload "$LAUNCH_AGENTS_DIR/$PLIST_NAME" 2>/dev/null || true
-    launchctl load "$LAUNCH_AGENTS_DIR/$PLIST_NAME"
-    echo -e "${GREEN}✓ Audio Toggle is now running in your menu bar! (🔊)${NC}"
-fi
+        echo -e "\n${YELLOW}Restarting Audio Toggle with your configuration...${NC}"
+        launchctl unload "$LAUNCH_AGENTS_DIR/$PLIST_NAME" 2>/dev/null || true
+        launchctl load "$LAUNCH_AGENTS_DIR/$PLIST_NAME"
+        echo -e "${GREEN}✓ Audio Toggle is now running in your menu bar! (🔊)${NC}"
+        ;;
+esac
 
 echo -e "\n${YELLOW}To reconfigure later:${NC}"
 echo -e "  ${CYAN}python3 $INSTALL_DIR/$SCRIPT_NAME --configure${NC}"

@@ -225,17 +225,24 @@ else
     REPLY="n"
 fi
 
-if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-    python3 "$INSTALL_DIR/$SCRIPT_NAME" --configure
+# Check if user declined configuration (POSIX-compatible pattern matching)
+case "$REPLY" in
+    [Nn]|[Nn][Oo])
+        # User explicitly declined
+        ;;
+    *)
+        # Empty or any other input means yes (default)
+        python3 "$INSTALL_DIR/$SCRIPT_NAME" --configure
 
-    echo -e "\n${YELLOW}Starting Audio Toggle...${NC}"
-    # Use nohup to keep process running after terminal closes (important for curl|bash installs)
-    # Redirect output to log file and disown to fully detach from shell
-    # Note: CONFIG_DIR is already created earlier in the script (line 149)
-    nohup python3 "$INSTALL_DIR/$SCRIPT_NAME" > "$CONFIG_DIR/audio_toggle.log" 2>&1 &
-    disown
-    echo -e "${GREEN}✓ Audio Toggle is now running in your system tray!${NC}"
-fi
+        echo -e "\n${YELLOW}Starting Audio Toggle...${NC}"
+        # Use nohup to keep process running after terminal closes (important for curl|bash installs)
+        # Redirect output to log file and disown to fully detach from shell
+        # Note: CONFIG_DIR is already created earlier in the script (line 149)
+        nohup python3 "$INSTALL_DIR/$SCRIPT_NAME" > "$CONFIG_DIR/audio_toggle.log" 2>&1 &
+        disown
+        echo -e "${GREEN}✓ Audio Toggle is now running in your system tray!${NC}"
+        ;;
+esac
 
 echo -e "\n${YELLOW}To reconfigure later:${NC}"
 echo -e "  ${CYAN}python3 $INSTALL_DIR/$SCRIPT_NAME --configure${NC}"
