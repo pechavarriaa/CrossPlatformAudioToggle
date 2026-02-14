@@ -426,10 +426,11 @@ def parse_pactl_devices(device_type):
 def configure_interactive():
     """Interactive configuration mode"""
     # Open /dev/tty for reading input, with fallback to stdin
+    tty_file = None
     try:
-        tty = open('/dev/tty', 'r', buffering=1)
+        tty_file = open('/dev/tty', 'r', buffering=1)
     except (OSError, IOError):
-        tty = sys.stdin
+        tty_file = sys.stdin
     
     print("\n=== Configure Audio Toggle for Linux ===\n")
 
@@ -475,7 +476,7 @@ def configure_interactive():
     try:
         # Get speaker output
         print("1. Profile 1 Output (OUTPUT - enter number): ", end='', flush=True)
-        speaker_input_str = tty.readline().strip()
+        speaker_input_str = tty_file.readline().strip()
         if speaker_input_str.lower() == 'q':
             print("Configuration cancelled.")
             return
@@ -488,7 +489,7 @@ def configure_interactive():
         
         # Get speaker input
         print("2. Profile 1 Input (INPUT - enter letter): ", end='', flush=True)
-        speaker_input_letter = tty.readline().strip().upper()
+        speaker_input_letter = tty_file.readline().strip().upper()
         if speaker_input_letter == 'Q':
             print("Configuration cancelled.")
             return
@@ -504,7 +505,7 @@ def configure_interactive():
         
         # Get headset output
         print("3. Profile 2 Output (OUTPUT - enter number): ", end='', flush=True)
-        headset_output_str = tty.readline().strip()
+        headset_output_str = tty_file.readline().strip()
         if headset_output_str.lower() == 'q':
             print("Configuration cancelled.")
             return
@@ -517,7 +518,7 @@ def configure_interactive():
         
         # Get headset input
         print("4. Profile 2 Input (INPUT - enter letter): ", end='', flush=True)
-        headset_input_letter = tty.readline().strip().upper()
+        headset_input_letter = tty_file.readline().strip().upper()
         if headset_input_letter == 'Q':
             print("Configuration cancelled.")
             return
@@ -539,7 +540,7 @@ def configure_interactive():
         print(f"  4. Profile 2 Input: {headset_input_name}")
         
         print("\nSave this configuration? (Y/n): ", end='', flush=True)
-        confirm = tty.readline().strip()
+        confirm = tty_file.readline().strip()
         if confirm.lower() != 'n':
             config_file = Path.home() / ".config" / "audio_toggle" / "config.json"
             config_file.parent.mkdir(parents=True, exist_ok=True)
@@ -564,8 +565,8 @@ def configure_interactive():
     except KeyboardInterrupt:
         print("\n\nConfiguration cancelled.")
     finally:
-        if tty != sys.stdin:
-            tty.close()
+        if tty_file and tty_file != sys.stdin:
+            tty_file.close()
 
 
 if __name__ == '__main__':
