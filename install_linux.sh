@@ -202,8 +202,8 @@ if [[ ! $REPLY =~ ^[Nn]$ ]]; then
     echo -e "\n${YELLOW}Starting Audio Toggle...${NC}"
     # Use nohup to keep process running after terminal closes (important for curl|bash installs)
     # Redirect output to log file and disown to fully detach from shell
-    LOG_FILE="$HOME/.config/audio_toggle/audio_toggle.log"
-    nohup python3 "$INSTALL_DIR/$SCRIPT_NAME" > "$LOG_FILE" 2>&1 &
+    # Note: CONFIG_DIR is already created earlier in the script (line 149)
+    nohup python3 "$INSTALL_DIR/$SCRIPT_NAME" > "$CONFIG_DIR/audio_toggle.log" 2>&1 &
     disown
     echo -e "${GREEN}✓ Audio Toggle is now running in your system tray!${NC}"
 fi
