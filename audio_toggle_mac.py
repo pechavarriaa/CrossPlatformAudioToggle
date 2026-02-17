@@ -22,6 +22,12 @@ except ImportError:
     print("Error: rumps library not found. Install with: pip3 install rumps")
     sys.exit(1)
 
+try:
+    from AppKit import NSApplication, NSApplicationActivationPolicyAccessory
+except ImportError:
+    print("Error: AppKit not found. Install with: pip3 install pyobjc-framework-Cocoa")
+    sys.exit(1)
+
 
 class AudioToggle(rumps.App):
     def __init__(self):
@@ -481,5 +487,10 @@ if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == '--configure':
         configure_interactive()
     else:
+        # Set activation policy to prevent Python from showing in Dock
+        # This must be done before creating the rumps App instance
+        app_instance = NSApplication.sharedApplication()
+        app_instance.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
+        
         app = AudioToggle()
         app.run()
