@@ -224,6 +224,11 @@ class AudioToggle(rumps.App):
         if not output_success:
             self.show_notification("Audio Toggle", f"Failed to switch output to {target_output}")
             return
+        
+        # Set system audio device (for communication apps like MS Teams)
+        system_success = self.set_audio_device(target_output, 'system')
+        if not system_success:
+            print(f"[Toggle] Warning: Failed to set system device, continuing anyway")
 
         # Attempt to switch input device
         input_success = self.set_audio_device(target_input, 'input')
