@@ -34,7 +34,12 @@ class NotificationDelegate(NSObject):
     """Delegate for NSUserNotificationCenter to show notifications as banners"""
     
     def userNotificationCenter_shouldPresentNotification_(self, center, notification):
-        """Always show notifications as banners, even when app is in foreground"""
+        """Always show notifications as banners, even when app is in foreground.
+        
+        Note: Method name follows PyObjC's Objective-C bridge naming convention where
+        colons in the Objective-C selector are replaced with underscores.
+        This maps to: userNotificationCenter:shouldPresentNotification:
+        """
         return True
 
 
@@ -277,7 +282,13 @@ class AudioToggle(rumps.App):
         self.show_notification("Audio Toggle", message)
     
     def show_notification(self, title, message):
-        """Show macOS notification using NSUserNotification API"""
+        """Show macOS notification using NSUserNotification API.
+        
+        Note: NSUserNotification is deprecated as of macOS 11.0 in favor of 
+        UNUserNotificationCenter. However, it still works and is simpler for
+        Python scripts that aren't packaged as proper macOS apps. UNUserNotificationCenter
+        requires complex app bundle signing and permission setup.
+        """
         try:
             notification = NSUserNotification.alloc().init()
             notification.setTitle_(title)
