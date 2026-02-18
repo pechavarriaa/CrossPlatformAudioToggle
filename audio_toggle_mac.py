@@ -24,18 +24,43 @@ except ImportError:
 
 try:
     from AppKit import NSApplication, NSApplicationActivationPolicyAccessory
-    from Foundation import NSUserNotification, NSUserNotificationCenter, NSObject
+    from Foundation import NSObject
 except ImportError:
     print("Error: AppKit not found. Install with: pip3 install pyobjc-framework-Cocoa")
     sys.exit(1)
 
+try:
+    from UserNotifications import (
+        UNUserNotificationCenter,
+        UNMutableNotificationContent,
+        UNNotificationRequest,
+        UNAuthorizationOptionAlert,
+        UNAuthorizationOptionSound,
+        UNAuthorizationOptionBadge,
+    )
+    USERNOTIFICATIONS_AVAILABLE = True
+except ImportError:
+    print("Warning: UserNotifications not found. Notifications may not work.")
+    print("Install with: pip3 install pyobjc-framework-UserNotifications")
+    USERNOTIFICATIONS_AVAILABLE = False
+
 
 class NotificationDelegate(NSObject):
-    """Delegate for NSUserNotificationCenter to ensure notifications are displayed"""
+    """Delegate for UNUserNotificationCenter to ensure notifications are displayed"""
     
-    def userNotificationCenter_shouldPresentNotification_(self, _center, _notification):
-        """Always show notifications as banners, even for background menu bar apps"""
-        return True
+    def userNotificationCenter_willPresentNotification_withCompletionHandler_(
+        self, center, notification, completionHandler
+    ):
+        """Show notifications as banners even when app is in foreground"""
+        # Use UNAuthorizationOptionAlert for banner, UNAuthorizationOptionSound for sound
+        # On macOS, this translates to banner + sound presentation
+        completionHandler(UNAuthorizationOptionAlert | UNAuthorizationOptionSound)
+    
+    def userNotificationCenter_didReceiveNotificationResponse_withCompletionHandler_(
+        self, center, response, completionHandler
+    ):
+        """Handle notification interactions (clicks, dismissals, etc.)"""
+        completionHandler()
 
 
 class AudioToggle(rumps.App):
@@ -62,6 +87,10 @@ class AudioToggle(rumps.App):
 
         # Create persistent notification delegate
         self.notification_delegate = NotificationDelegate.alloc().init()
+        
+        # Request notification permissions if UserNotifications is available
+        if USERNOTIFICATIONS_AVAILABLE:
+            self._request_notification_permissions()
 
         self.load_config()
         self.menu = [
@@ -100,6 +129,27 @@ class AudioToggle(rumps.App):
                 self.lockfile_path.unlink()
         except Exception:
             pass  # Ignore errors during cleanup
+
+    def _request_notification_permissions(self):
+        """Request notification permissions from macOS"""
+        try:
+            center = UNUserNotificationCenter.currentNotificationCenter()
+            center.setDelegate_(self.notification_delegate)
+            
+            # Request authorization for alerts and sounds
+            options = UNAuthorizationOptionAlert | UNAuthorizationOptionSound
+            
+            def completion_handler(granted, error):
+                if not granted:
+                    print("Notification permissions not granted. Notifications may not appear.")
+                if error:
+                    print(f"Error requesting notification permissions: {error}")
+            
+            center.requestAuthorizationWithOptions_completionHandler_(
+                options, completion_handler
+            )
+        except Exception as e:
+            print(f"Failed to request notification permissions: {e}")
 
     def load_config(self):
         """Load device configuration from file"""
@@ -275,20 +325,40 @@ class AudioToggle(rumps.App):
         self.show_notification("Audio Toggle", message)
     
     def show_notification(self, title, message):
-        """Show macOS notification using NSUserNotification"""
+        """Show macOS notification using UNUserNotificationCenter"""
+        if not USERNOTIFICATIONS_AVAILABLE:
+            # Fallback: print to console if UserNotifications not available
+            print(f"{title}: {message}")
+            return
+        
         try:
-            # Configure notification center with persistent delegate
-            center = NSUserNotificationCenter.defaultUserNotificationCenter()
-            center.setDelegate_(self.notification_delegate)
+            center = UNUserNotificationCenter.currentNotificationCenter()
             
-            # Create and deliver notification
-            notification = NSUserNotification.alloc().init()
-            notification.setTitle_(title)
-            notification.setInformativeText_(message)
-            center.deliverNotification_(notification)
-        except Exception:
+            # Create notification content
+            content = UNMutableNotificationContent.alloc().init()
+            content.setTitle_(title)
+            content.setBody_(message)
+            content.setSound_(None)  # Use default system sound, or None for silent
+            
+            # Create a unique identifier for this notification
+            import uuid
+            identifier = f"audio-toggle-{uuid.uuid4()}"
+            
+            # Create notification request (with no trigger, delivers immediately)
+            request = UNNotificationRequest.requestWithIdentifier_content_trigger_(
+                identifier, content, None
+            )
+            
+            # Schedule notification
+            def completion_handler(error):
+                if error:
+                    print(f"Error delivering notification: {error}")
+            
+            center.addNotificationRequest_withCompletionHandler_(request, completion_handler)
+        except Exception as e:
             # Fallback: print to console if notification fails
             print(f"{title}: {message}")
+            print(f"Notification error: {e}")
     
     @rumps.clicked("Configure Devices...")
     def configure_devices(self, _):

@@ -55,7 +55,7 @@ If you prefer to install manually:
 
 3. **Install Python dependencies**:
    ```bash
-   pip3 install --user rumps pyobjc-framework-Cocoa
+   pip3 install --user rumps pyobjc-framework-Cocoa pyobjc-framework-UserNotifications
    ```
 
 4. **Download the script**:
@@ -141,7 +141,7 @@ brew install switchaudio-osx
 
 ### "rumps not found" error
 ```bash
-pip3 install --user rumps pyobjc-framework-Cocoa
+pip3 install --user rumps pyobjc-framework-Cocoa pyobjc-framework-UserNotifications
 ```
 
 ### App doesn't appear in menu bar
