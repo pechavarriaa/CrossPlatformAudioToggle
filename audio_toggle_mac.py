@@ -33,7 +33,7 @@ except ImportError:
 class NotificationDelegate(NSObject):
     """Delegate for NSUserNotificationCenter to ensure notifications are displayed"""
     
-    def userNotificationCenter_shouldPresentNotification_(self, center, notification):
+    def userNotificationCenter_shouldPresentNotification_(self, _center, _notification):
         """Always show notifications as banners, even for background menu bar apps"""
         return True
 
