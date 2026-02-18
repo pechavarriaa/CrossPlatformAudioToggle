@@ -14,6 +14,7 @@ import sys
 import time
 import fcntl
 import atexit
+import uuid
 from pathlib import Path
 
 try:
@@ -338,10 +339,9 @@ class AudioToggle(rumps.App):
             content = UNMutableNotificationContent.alloc().init()
             content.setTitle_(title)
             content.setBody_(message)
-            content.setSound_(None)  # Use default system sound, or None for silent
+            content.setSound_(None)  # Silent notification
             
             # Create a unique identifier for this notification
-            import uuid
             identifier = f"audio-toggle-{uuid.uuid4()}"
             
             # Create notification request (with no trigger, delivers immediately)
