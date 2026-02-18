@@ -55,7 +55,7 @@ If you prefer to install manually:
 
 3. **Install Python dependencies**:
    ```bash
-   pip3 install --user rumps pyobjc-framework-Cocoa
+   pip3 install --user rumps pyobjc-framework-Cocoa pyobjc-framework-UserNotifications
    ```
 
 4. **Download the script**:
@@ -141,7 +141,7 @@ brew install switchaudio-osx
 
 ### "rumps not found" error
 ```bash
-pip3 install --user rumps pyobjc-framework-Cocoa
+pip3 install --user rumps pyobjc-framework-Cocoa pyobjc-framework-UserNotifications
 ```
 
 ### App doesn't appear in menu bar
@@ -154,6 +154,22 @@ Run the configuration again and make sure you select the correct device numbers:
 ```bash
 python3 ~/.local/share/audio_toggle/audio_toggle_mac.py --configure
 ```
+
+### Notifications not appearing
+If you don't see notifications when toggling audio:
+
+1. **Check notification permissions**: Go to **System Settings** > **Notifications** > **Python** (or your terminal application) and ensure notifications are enabled.
+
+2. **First run**: The app will request notification permissions on first run. If you denied them, you can reset permissions by running:
+   ```bash
+   # Reset notification permissions for Python
+   tccutil reset Notifications com.apple.python3
+   ```
+   Then restart the app.
+
+3. **Check Do Not Disturb**: Make sure Focus/Do Not Disturb mode is not blocking notifications.
+
+4. **Terminal/app signing**: Notifications work best when the app is properly signed. If running from Terminal, ensure Terminal has notification permissions.
 
 ## Uninstall
 
@@ -172,6 +188,7 @@ The application uses:
 - **rumps** - A Python library for creating macOS menu bar applications
 - **SwitchAudioSource** - A command-line utility to change audio devices on macOS
 - **CoreAudio** - macOS's native audio framework (accessed via SwitchAudioSource)
+- **UserNotifications** - macOS's modern notification framework for displaying alerts
 - **LaunchAgents** - macOS's system for auto-starting applications
 
 The app queries the current default audio device and switches between your configured devices based on the current state.
