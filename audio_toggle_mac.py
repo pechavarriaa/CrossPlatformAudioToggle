@@ -24,10 +24,18 @@ except ImportError:
 
 try:
     from AppKit import NSApplication, NSApplicationActivationPolicyAccessory
-    from Foundation import NSUserNotification, NSUserNotificationCenter
+    from Foundation import NSUserNotification, NSUserNotificationCenter, NSObject
 except ImportError:
     print("Error: AppKit not found. Install with: pip3 install pyobjc-framework-Cocoa")
     sys.exit(1)
+
+
+class NotificationDelegate(NSObject):
+    """Delegate for NSUserNotificationCenter to ensure notifications are displayed"""
+    
+    def userNotificationCenter_shouldPresentNotification_(self, center, notification):
+        """Always show notifications, even when app is in foreground"""
+        return True
 
 
 class AudioToggle(rumps.App):
@@ -266,10 +274,15 @@ class AudioToggle(rumps.App):
     def show_notification(self, title, message):
         """Show macOS notification using NSUserNotification"""
         try:
+            # Create and configure delegate to ensure notifications are shown
+            delegate = NotificationDelegate.alloc().init()
+            center = NSUserNotificationCenter.defaultUserNotificationCenter()
+            center.setDelegate_(delegate)
+            
+            # Create and deliver notification
             notification = NSUserNotification.alloc().init()
             notification.setTitle_(title)
             notification.setInformativeText_(message)
-            center = NSUserNotificationCenter.defaultUserNotificationCenter()
             center.deliverNotification_(notification)
         except Exception:
             # Fallback: print to console if notification fails
