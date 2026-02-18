@@ -256,9 +256,6 @@ class AudioToggle(rumps.App):
         if not input_success:
             self.show_notification("Audio Toggle", f"Output switched but input failed")
             return
-        
-        # Brief delay to allow camera-embedded microphones to initialize
-        time.sleep(0.5)
 
         # Both switches succeeded
         # Shorten device names for display

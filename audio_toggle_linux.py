@@ -322,9 +322,6 @@ class AudioToggle:
             self.show_notification("Audio Toggle", f"Output switched but input failed")
             return
 
-        # Brief delay to allow camera-embedded microphones to initialize
-        time.sleep(0.5)
-
         # Both switches succeeded
         # Get display names from device IDs
         target_output_display = self.get_device_display_name(target_output, 'sinks')
