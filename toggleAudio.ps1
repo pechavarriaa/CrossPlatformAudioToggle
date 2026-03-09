@@ -145,8 +145,8 @@ namespace CoreAudioApi {
         }
 
 
-        public static void SetDefaultDevice(string deviceName, ERole role) {
-            string deviceId = GetDeviceId(deviceName);
+        public static void SetDefaultDevice(string deviceName, ERole role, EDataFlow dataFlow) {
+            string deviceId = GetDeviceId(deviceName, dataFlow);
             if (string.IsNullOrEmpty(deviceId)) {
                 throw new Exception("Device not found: " + deviceName);
             }
@@ -281,11 +281,11 @@ namespace CoreAudioApi {
             return sb.ToString();
         }
 
-        private static string GetDeviceId(string deviceName) {
+        private static string GetDeviceId(string deviceName, EDataFlow dataFlow) {
             string normalizedTarget = NormalizeDeviceName(deviceName);
             string canonicalTarget = CanonicalizeForMatch(deviceName);
             IMMDeviceCollection deviceCollection;
-            deviceEnumerator.EnumAudioEndpoints(EDataFlow.eAll, 1, out deviceCollection);
+            deviceEnumerator.EnumAudioEndpoints(dataFlow, 1, out deviceCollection);
             int count;
             deviceCollection.GetCount(out count);
             for (int i = 0; i < count; i++) {
@@ -433,12 +433,12 @@ function Toggle-AudioSetup {
     if ($currentPlayback -eq $headsetOutput) {
         # Switch to Profile 1 (Desktop)
         try {
-            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($secondMicDevice, [CoreAudioApi.ERole]::eConsole)
-            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($secondMicDevice, [CoreAudioApi.ERole]::eMultimedia)
-            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($secondMicDevice, [CoreAudioApi.ERole]::eCommunications)
-            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($speakerDevice, [CoreAudioApi.ERole]::eConsole)
-            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($speakerDevice, [CoreAudioApi.ERole]::eMultimedia)
-            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($speakerDevice, [CoreAudioApi.ERole]::eCommunications)
+            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($secondMicDevice, [CoreAudioApi.ERole]::eConsole, [CoreAudioApi.EDataFlow]::eCapture)
+            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($secondMicDevice, [CoreAudioApi.ERole]::eMultimedia, [CoreAudioApi.EDataFlow]::eCapture)
+            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($secondMicDevice, [CoreAudioApi.ERole]::eCommunications, [CoreAudioApi.EDataFlow]::eCapture)
+            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($speakerDevice, [CoreAudioApi.ERole]::eConsole, [CoreAudioApi.EDataFlow]::eRender)
+            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($speakerDevice, [CoreAudioApi.ERole]::eMultimedia, [CoreAudioApi.EDataFlow]::eRender)
+            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($speakerDevice, [CoreAudioApi.ERole]::eCommunications, [CoreAudioApi.EDataFlow]::eRender)
 
             $outShort = Get-ShortDeviceName $speakerDevice
             $inShort = Get-ShortDeviceName $secondMicDevice
@@ -451,12 +451,12 @@ function Toggle-AudioSetup {
     else {
         # Switch to Profile 2 (Headset)
         try {
-            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($headsetInput, [CoreAudioApi.ERole]::eConsole)
-            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($headsetInput, [CoreAudioApi.ERole]::eMultimedia)
-            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($headsetInput, [CoreAudioApi.ERole]::eCommunications)
-            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($headsetOutput, [CoreAudioApi.ERole]::eConsole)
-            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($headsetOutput, [CoreAudioApi.ERole]::eMultimedia)
-            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($headsetOutput, [CoreAudioApi.ERole]::eCommunications)
+            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($headsetInput, [CoreAudioApi.ERole]::eConsole, [CoreAudioApi.EDataFlow]::eCapture)
+            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($headsetInput, [CoreAudioApi.ERole]::eMultimedia, [CoreAudioApi.EDataFlow]::eCapture)
+            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($headsetInput, [CoreAudioApi.ERole]::eCommunications, [CoreAudioApi.EDataFlow]::eCapture)
+            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($headsetOutput, [CoreAudioApi.ERole]::eConsole, [CoreAudioApi.EDataFlow]::eRender)
+            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($headsetOutput, [CoreAudioApi.ERole]::eMultimedia, [CoreAudioApi.EDataFlow]::eRender)
+            [CoreAudioApi.CoreAudioController]::SetDefaultDevice($headsetOutput, [CoreAudioApi.ERole]::eCommunications, [CoreAudioApi.EDataFlow]::eRender)
 
             $outShort = Get-ShortDeviceName $headsetOutput
             $inShort = Get-ShortDeviceName $headsetInput
