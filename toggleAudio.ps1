@@ -281,6 +281,16 @@ namespace CoreAudioApi {
             return sb.ToString();
         }
 
+        // dataFlow MUST be eRender (output) or eCapture (input) — never eAll.
+        // Combo devices such as a USB speakerphone expose two separate Windows audio
+        // endpoints that share the exact same friendly name: one for playback and one
+        // for recording.  If we enumerated eAll, the name-match loop would return the
+        // first endpoint it encountered (whichever flow direction Windows lists first),
+        // so both the speaker and the mic calls would resolve to the *same* device ID.
+        // The call that got the wrong ID would then silently switch the wrong endpoint
+        // (or do nothing), leaving either the mic or the speaker on the old device.
+        // By scoping the enumeration to the correct flow direction we guarantee we
+        // always find the right endpoint, even when names are identical.
         private static string GetDeviceId(string deviceName, EDataFlow dataFlow) {
             string normalizedTarget = NormalizeDeviceName(deviceName);
             string canonicalTarget = CanonicalizeForMatch(deviceName);
