@@ -39,6 +39,16 @@ if ! command -v python3 &> /dev/null; then
     brew install python3
 fi
 
+# Verify Python version is 3.7+
+PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>/dev/null)
+PYTHON_MINOR=$(python3 -c "import sys; print(sys.version_info.minor)" 2>/dev/null)
+if [ -n "$PYTHON_MINOR" ] && [ "$PYTHON_MINOR" -lt 7 ]; then
+    echo -e "${RED}Error: Python 3.7 or later is required (found Python $PYTHON_VERSION).${NC}"
+    echo -e "${YELLOW}Install a newer Python with: brew install python3${NC}"
+    exit 1
+fi
+echo -e "${GREEN}Found Python $PYTHON_VERSION${NC}"
+
 # Check for pip3
 if ! command -v pip3 &> /dev/null; then
     echo -e "${YELLOW}pip3 not found. Installing pip3...${NC}"
@@ -51,11 +61,20 @@ if ! command -v SwitchAudioSource &> /dev/null; then
     brew install switchaudio-osx
 fi
 
+# Determine compatible pyobjc version range based on Python version
+if [ "$PYTHON_MINOR" -lt 8 ]; then
+    PYOBJC_VERSION="pyobjc-framework-Cocoa>=9.0,<10"
+elif [ "$PYTHON_MINOR" -lt 9 ]; then
+    PYOBJC_VERSION="pyobjc-framework-Cocoa>=10.0,<11"
+else
+    PYOBJC_VERSION="pyobjc-framework-Cocoa"
+fi
+
 # Install Python dependencies
 echo -e "${CYAN}Installing Python dependencies...${NC}"
-pip3 install --user rumps pyobjc-framework-Cocoa || {
-    echo -e "${YELLOW}Note: If installation failed, you may need to use: pip3 install --user --break-system-packages rumps pyobjc-framework-Cocoa${NC}"
-    pip3 install --user --break-system-packages rumps pyobjc-framework-Cocoa
+pip3 install --user rumps "$PYOBJC_VERSION" || {
+    echo -e "${YELLOW}Note: If installation failed, you may need to use: pip3 install --user --break-system-packages rumps ${PYOBJC_VERSION}${NC}"
+    pip3 install --user --break-system-packages rumps "$PYOBJC_VERSION"
 }
 
 # Create installation directory
