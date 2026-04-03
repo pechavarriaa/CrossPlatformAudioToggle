@@ -62,19 +62,26 @@ if ! command -v SwitchAudioSource &> /dev/null; then
 fi
 
 # Determine compatible pyobjc version range based on Python version
+# pyobjc packages must be pinned together to avoid cross-version conflicts
 if [ "$PYTHON_MINOR" -lt 8 ]; then
-    PYOBJC_VERSION="pyobjc-framework-Cocoa>=9.0,<10"
+    PYOBJC_COCOA="pyobjc-framework-Cocoa>=9.0,<10"
+    PYOBJC_CORE="pyobjc-core>=9.0,<10"
 elif [ "$PYTHON_MINOR" -lt 9 ]; then
-    PYOBJC_VERSION="pyobjc-framework-Cocoa>=10.0,<11"
+    PYOBJC_COCOA="pyobjc-framework-Cocoa>=10.0,<11"
+    PYOBJC_CORE="pyobjc-core>=10.0,<11"
+elif [ "$PYTHON_MINOR" -lt 10 ]; then
+    PYOBJC_COCOA="pyobjc-framework-Cocoa>=11.0,<13"
+    PYOBJC_CORE="pyobjc-core>=11.0,<13"
 else
-    PYOBJC_VERSION="pyobjc-framework-Cocoa"
+    PYOBJC_COCOA="pyobjc-framework-Cocoa"
+    PYOBJC_CORE="pyobjc-core"
 fi
 
 # Install Python dependencies
 echo -e "${CYAN}Installing Python dependencies...${NC}"
-pip3 install --user rumps "$PYOBJC_VERSION" || {
-    echo -e "${YELLOW}Note: If installation failed, you may need to use: pip3 install --user --break-system-packages rumps ${PYOBJC_VERSION}${NC}"
-    pip3 install --user --break-system-packages rumps "$PYOBJC_VERSION"
+pip3 install --user rumps "$PYOBJC_CORE" "$PYOBJC_COCOA" || {
+    echo -e "${YELLOW}Note: If installation failed, you may need to use the --break-system-packages flag${NC}"
+    pip3 install --user --break-system-packages rumps "$PYOBJC_CORE" "$PYOBJC_COCOA"
 }
 
 # Create installation directory
